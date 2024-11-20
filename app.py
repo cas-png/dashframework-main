@@ -27,35 +27,58 @@ app.layout = html.Div(
                 )
             ],
         ),
-        # Graph displaying the density map
+        # Tabs for switching between heatmap and scatter plot
+        dcc.Tabs(
+            id="map-tabs",
+            value="heatmap",  # Default tab
+            children=[
+                dcc.Tab(label="Heatmap", value="heatmap"),
+                dcc.Tab(label="Scatter Plot", value="scatter"),
+            ],
+        ),
+        # Graph displaying the map
         dcc.Graph(
             id='shark-map',
-            style={"height": "90%", "width": "100%"}  # Full-screen graph
+            style={"height": "85%", "width": "100%"}  # Full-screen graph
         )
     ]
 )
 
-# Callback to update the map based on dropdown selection
+# Callback to update the map based on dropdown selection and selected tab
 @app.callback(
     Output('shark-map', 'figure'),
-    [Input('shark-dropdown', 'value')]
+    [Input('shark-dropdown', 'value'),
+     Input('map-tabs', 'value')]
 )
-def update_map(selected_shark):
+def update_map(selected_shark, selected_tab):
     if selected_shark:
         filtered_df = df[df['Shark.common.name'] == selected_shark]
     else:
         filtered_df = df  # Show all data if no shark is selected
 
-    # Create density map figure
-    fig = px.density_mapbox(
-        filtered_df,
-        lat='Latitude',
-        lon='Longitude',
-        radius=5,
-        center=dict(lat=-23, lon=132),#center of australia
-        zoom=3,
-        mapbox_style="open-street-map"
-    )
+    if selected_tab == "heatmap":
+        # Create density map (heatmap)
+        fig = px.density_mapbox(
+            filtered_df,
+            lat='Latitude',
+            lon='Longitude',
+            radius=5,
+            center=dict(lat=-23, lon=132),  # Center of Australia
+            zoom=3,
+            mapbox_style="open-street-map"
+        )
+    elif selected_tab == "scatter":
+        # Create scatter plot map
+        fig = px.scatter_mapbox(
+            filtered_df,
+            lat='Latitude',
+            lon='Longitude',
+            color='Victim.injury',  # Color by incident type
+            hover_name='Shark.common.name',  # Display shark name on hover
+            center=dict(lat=-23, lon=132),  # Center of Australia
+            zoom=3,
+            mapbox_style="open-street-map"
+        )
     return fig
 
 # Run the server
