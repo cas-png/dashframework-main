@@ -12,11 +12,11 @@ app = Dash()
 
 # Create the layout
 app.layout = html.Div(
-    style={"height": "100vh", "width": "100vw", "margin": 0, "padding": 0},  # Full-screen container
+    style={"height": "100vh", "width": "100vw", "margin": 0, "padding": 0, "display": "flex"},  # Full-screen container
     children=[
-        # Dropdown menu for filtering by shark type
+        # Sidebar with dropdown
         html.Div(
-            style={"width": "300px", "padding": "10px"},
+            style={"width": "20%", "padding": "10px", "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)"},
             children=[
                 dcc.Dropdown(
                     id='shark-dropdown',
@@ -24,41 +24,59 @@ app.layout = html.Div(
                         {"label": shark, "value": shark} for shark in df['Shark.common.name'].unique()
                     ],
                     placeholder="Select a shark type",
-                )
+                ),
             ],
         ),
-        # Tabs for switching between heatmap and scatter plot
-        dcc.Tabs(
-            id="map-tabs",
-            value="heatmap",  # Default tab
+        # Main content with map and bar chart
+        html.Div(
+            style={"width": "80%", "display": "flex", "flexDirection": "column", "padding": "10px"},
             children=[
-                dcc.Tab(label="Heatmap", value="heatmap"),
-                dcc.Tab(label="Scatter Plot", value="scatter"),
-            ],
+                # Tabs for switching between heatmap and scatter plot
+                dcc.Tabs(
+                    id="map-tabs",
+                    value="heatmap",  # Default tab
+                    children=[
+                        dcc.Tab(label="Heatmap", value="heatmap"),
+                        dcc.Tab(label="Scatter Plot", value="scatter"),
+                    ],
+                ),
+                html.Div(
+                    style={"display": "flex", "flexDirection": "row", "height": "100%"},
+                    children=[
+                        # Map
+                        dcc.Graph(
+                            id='shark-map',
+                            style={"flex": "3", "marginRight": "10px"}
+                        ),
+                        # Bar chart
+                        dcc.Graph(
+                            id='injury-bar-chart',
+                            style={"flex": "1"}
+                        )
+                    ]
+                ),
+            ]
         ),
-        # Graph displaying the map
-        dcc.Graph(
-            id='shark-map',
-            style={"height": "85%", "width": "100%"}  # Full-screen graph
-        )
     ]
 )
 
-# Callback to update the map based on dropdown selection and selected tab
+# Callback to update the map and bar chart
 @app.callback(
-    Output('shark-map', 'figure'),
+    [Output('shark-map', 'figure'),
+     Output('injury-bar-chart', 'figure')],
     [Input('shark-dropdown', 'value'),
      Input('map-tabs', 'value')]
 )
-def update_map(selected_shark, selected_tab):
+def update_map_and_chart(selected_shark, selected_tab):
+    # Filter the data based on the selected shark type
+    filtered_df = df
     if selected_shark:
-        filtered_df = df[df['Shark.common.name'] == selected_shark]
-    else:
-        filtered_df = df  # Show all data if no shark is selected
+        filtered_df = filtered_df[filtered_df['Shark.common.name'] == selected_shark]
 
+    # Create the map figure
     if selected_tab == "heatmap":
         # Create density map (heatmap)
-        fig = px.density_mapbox(
+        map_fig = px.density_mapbox(
             filtered_df,
             lat='Latitude',
             lon='Longitude',
@@ -69,7 +87,7 @@ def update_map(selected_shark, selected_tab):
         )
     elif selected_tab == "scatter":
         # Create scatter plot map
-        fig = px.scatter_mapbox(
+        map_fig = px.scatter_mapbox(
             filtered_df,
             lat='Latitude',
             lon='Longitude',
@@ -79,7 +97,19 @@ def update_map(selected_shark, selected_tab):
             zoom=3,
             mapbox_style="open-street-map"
         )
-    return fig
+
+    # Create the bar chart figure
+    injury_counts = filtered_df['Victim.injury'].value_counts().reset_index()
+    injury_counts.columns = ['Victim.injury', 'Count']
+    bar_fig = px.bar(
+        injury_counts,
+        x='Victim.injury',
+        y='Count',
+        title="Distribution of Victim Injuries",
+        labels={"Victim.injury": "Injury Type", "Count": "Count"},
+    )
+
+    return map_fig, bar_fig
 
 # Run the server
 if __name__ == '__main__':
