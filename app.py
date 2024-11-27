@@ -50,7 +50,7 @@ app.layout = html.Div(
                         ),
                         # Bar chart
                         dcc.Graph(
-                            id='injury-bar-chart',
+                            id='activity-bar-chart',
                             style={"flex": "1"}
                         )
                     ]
@@ -63,7 +63,7 @@ app.layout = html.Div(
 # Callback to update the map and bar chart
 @app.callback(
     [Output('shark-map', 'figure'),
-     Output('injury-bar-chart', 'figure')],
+     Output('activity-bar-chart', 'figure')],
     [Input('shark-dropdown', 'value'),
      Input('map-tabs', 'value')]
 )
@@ -99,14 +99,14 @@ def update_map_and_chart(selected_shark, selected_tab):
         )
 
     # Create the bar chart figure
-    injury_counts = filtered_df['Victim.injury'].value_counts().reset_index()
-    injury_counts.columns = ['Victim.injury', 'Count']
+    activity_counts = filtered_df['Victim.activity'].value_counts().reset_index()
+    activity_counts.columns = ['Victim.activity', 'Count']
     bar_fig = px.bar(
-        injury_counts,
-        x='Victim.injury',
+        activity_counts,
+        x='Victim.activity',
         y='Count',
-        title="Distribution of Victim Injuries",
-        labels={"Victim.injury": "Injury Type", "Count": "Count"},
+        title="Distribution of Victim.activity",
+        labels={"Victim.activity": "activity Type", "Count": "Count"},
     )
 
     return map_fig, bar_fig
