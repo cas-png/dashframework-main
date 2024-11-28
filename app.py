@@ -25,6 +25,13 @@ app.layout = html.Div(
                     ],
                     placeholder="Select a shark type",
                 ),
+                dcc.Dropdown(
+                    id='var-select',
+                    options=[
+                        {"label": varname, "value": varname} for varname in df.columns.values
+                    ],
+                    placeholder="Select a shark type",
+                ),
             ],
         ),
         # Main content with map and bar chart
@@ -65,9 +72,10 @@ app.layout = html.Div(
     [Output('shark-map', 'figure'),
      Output('activity-bar-chart', 'figure')],
     [Input('shark-dropdown', 'value'),
-     Input('map-tabs', 'value')]
+     Input('map-tabs', 'value'),
+     Input('var-select', 'value')]
 )
-def update_map_and_chart(selected_shark, selected_tab):
+def update_map_and_chart(selected_shark, selected_tab, selected_var):
     # Filter the data based on the selected shark type
     filtered_df = df
     if selected_shark:
@@ -99,14 +107,14 @@ def update_map_and_chart(selected_shark, selected_tab):
         )
 
     # Create the bar chart figure
-    activity_counts = filtered_df['Victim.activity'].value_counts().reset_index()
-    activity_counts.columns = ['Victim.activity', 'Count']
+    activity_counts = filtered_df[selected_var].value_counts().reset_index()
+    activity_counts.columns = [selected_var, 'Count']
     bar_fig = px.bar(
         activity_counts,
-        x='Victim.activity',
+        x=selected_var,
         y='Count',
-        title="Distribution of Victim.activity",
-        labels={"Victim.activity": "activity Type", "Count": "Count"},
+        title="Distribution of"+selected_var,
+        labels={selected_var: "activity Type", "Count": "Count"},
     )
 
     return map_fig, bar_fig
