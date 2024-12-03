@@ -10,6 +10,27 @@ df = get_data()
 # Initialize the Dash app
 app = Dash()
 
+tabs_=dcc.Tabs(
+        id="map-tabs",
+        value="heatmap",  # Default tab
+        children=[
+            dcc.Tab(label="Heatmap", value="heatmap"),
+            dcc.Tab(label="Scatter Plot", value="scatter"),
+        ],
+    )
+map_=dcc.Graph(
+        id='shark-map',
+        style={"flex": "3", "marginRight": "10px"}
+    )
+bar_chart_=dcc.Graph(
+        id='activity-bar-chart',
+        style={"flex": "1"}
+    )
+timeline_chart_=dcc.Graph(
+        id='timeline-chart',
+        style={"flex": "1"}
+    )
+
 # Create the layout
 app.layout = html.Div(
     style={"height": "100vh", "width": "100vw", "margin": 0, "padding": 0, "display": "flex"},  # Full-screen container
@@ -30,7 +51,7 @@ app.layout = html.Div(
                     options=[
                         {"label": varname, "value": varname} for varname in df.columns.values
                     ],
-                    placeholder="Select a shark type",
+                    placeholder="Select a variable",
                 ),
             ],
         ),
@@ -38,28 +59,23 @@ app.layout = html.Div(
         html.Div(
             style={"width": "80%", "display": "flex", "flexDirection": "column", "padding": "10px"},
             children=[
-                # Tabs for switching between heatmap and scatter plot
-                dcc.Tabs(
-                    id="map-tabs",
-                    value="heatmap",  # Default tab
-                    children=[
-                        dcc.Tab(label="Heatmap", value="heatmap"),
-                        dcc.Tab(label="Scatter Plot", value="scatter"),
-                    ],
-                ),
+                tabs_,
                 html.Div(
                     style={"display": "flex", "flexDirection": "row", "height": "100%"},
                     children=[
-                        # Map
-                        dcc.Graph(
-                            id='shark-map',
-                            style={"flex": "3", "marginRight": "10px"}
+                        html.Div(
+                            style={"display": "flex", "flexDirection": "column", "height": "100%", "width": "70%"},
+                            children=[
+                                map_,
+                                timeline_chart_,
+                            ]
                         ),
-                        # Bar chart
-                        dcc.Graph(
-                            id='activity-bar-chart',
-                            style={"flex": "1"}
-                        )
+                        html.Div(
+                            style={"display": "flex", "flexDirection": "column", "height": "100%", "width": "30%"},
+                            children=[
+                                bar_chart_,
+                            ]
+                        ),
                     ]
                 ),
             ]
@@ -67,15 +83,18 @@ app.layout = html.Div(
     ]
 )
 
+
 # Callback to update the map and bar chart
 @app.callback(
     [Output('shark-map', 'figure'),
-     Output('activity-bar-chart', 'figure')],
+     Output('activity-bar-chart', 'figure'),
+     Output('timeline-chart', 'figure')],
     [Input('shark-dropdown', 'value'),
      Input('map-tabs', 'value'),
-     Input('var-select', 'value')]
+     Input('var-select', 'value'),]
 )
-def update_map_and_chart(selected_shark, selected_tab, selected_var):
+
+def callback(selected_shark, selected_tab, selected_var='Victim.activity'):
     # Filter the data based on the selected shark type
     filtered_df = df
     if selected_shark:
@@ -93,7 +112,7 @@ def update_map_and_chart(selected_shark, selected_tab, selected_var):
             zoom=3,
             mapbox_style="open-street-map"
         )
-    elif selected_tab == "scatter":
+    else:# selected_tab == "scatter":
         # Create scatter plot map
         map_fig = px.scatter_mapbox(
             filtered_df,
@@ -109,15 +128,57 @@ def update_map_and_chart(selected_shark, selected_tab, selected_var):
     # Create the bar chart figure
     activity_counts = filtered_df[selected_var].value_counts().reset_index()
     activity_counts.columns = [selected_var, 'Count']
-    bar_fig = px.bar(
+    bar_fig = px.histogram(
         activity_counts,
         x=selected_var,
         y='Count',
         title="Distribution of"+selected_var,
+        nbins=20,
         labels={selected_var: "activity Type", "Count": "Count"},
     )
 
-    return map_fig, bar_fig
+    # Create the bar chart figure
+    timeline_counts = filtered_df['Incident.date'].value_counts().reset_index()
+    timeline_counts.columns = ['Incident.date', 'Count']
+    timeline_fig = px.bar(
+        timeline_counts,
+        x='Incident.date',
+        range_x=[df['Incident.date'].min(), df['Incident.date'].max()],
+        y='Count',
+        title="Distribution of incidents over time",
+        # nbins=filtered_df['Incident.year'].unique().shape[0],
+        labels={"Incident.date": "Month of indicent", "Count": "Count"},
+    )
+    timeline_fig.update_xaxes(
+        rangeslider_visible=True,
+        tickformatstops = [
+            dict(dtickrange=[None, "M12"], value="%b '%y"),
+            dict(dtickrange=["M12", None], value="%Y")
+        ],
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1,
+                    label="1m",
+                    step="month",
+                    stepmode="backward"),
+                dict(count=6,
+                    label="6m",
+                    step="month",
+                    stepmode="backward"),
+                dict(count=1,
+                    label="YTD",
+                    step="year",
+                    stepmode="todate"),
+                dict(count=1,
+                    label="1y",
+                    step="year",
+                    stepmode="backward"),
+                dict(step="all")
+            ])
+        ),
+    )
+
+    return map_fig, bar_fig, timeline_fig
 
 # Run the server
 if __name__ == '__main__':
