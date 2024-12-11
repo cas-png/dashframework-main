@@ -10,11 +10,15 @@ df = get_data()
 # Initialize the Dash app
 app = Dash()
 
+# Get the range of shark lengths for the slider
+shark_length_min = df['Shark.length.m'].min()
+shark_length_max = df['Shark.length.m'].max()
+
 # Create the layout
 app.layout = html.Div(
     style={"height": "100vh", "width": "100vw", "margin": 0, "padding": 0, "display": "flex"},  # Full-screen container
     children=[
-        # Sidebar with dropdown
+        # Sidebar with dropdown and filters
         html.Div(
             style={"width": "20%", "padding": "10px", "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)"},
             children=[
@@ -24,6 +28,38 @@ app.layout = html.Div(
                         {"label": shark, "value": shark} for shark in df['Shark.common.name'].unique()
                     ],
                     placeholder="Select a shark type",
+                ),
+                html.Div(
+                    id='filters-container',
+                    style={"display": "none"},  # Initially hidden
+                    children=[
+                        html.Label("Shark Length (meters):"),
+                        dcc.RangeSlider(
+                            id='shark-length-slider',
+                            min=shark_length_min,
+                            max=shark_length_max,
+                            step=0.1,
+                            marks={
+                                int(i): str(int(i)) for i in range(int(shark_length_min), int(shark_length_max) + 1, 1)
+                            },
+                            value=[shark_length_min, shark_length_max],
+                        ),
+                        html.Label("Provoked Status:"),
+                        dcc.RadioItems(
+                            id='provoked-status',
+                            options=[
+                                {"label": "All", "value": "all"},
+                                {"label": "Provoked", "value": "provoked"},
+                                {"label": "Unprovoked", "value": "unprovoked"},
+                            ],
+                            value="all",
+                        ),
+                        dcc.Checklist(
+                            id='include-unknown-length',
+                            options=[{"label": "Include unknown lengths", "value": "include"}],
+                            value=[]
+                        ),
+                    ]
                 ),
             ],
         ),
@@ -60,18 +96,44 @@ app.layout = html.Div(
     ]
 )
 
+# Callback to toggle filter visibility
+@app.callback(
+    Output('filters-container', 'style'),
+    Input('shark-dropdown', 'value')
+)
+def toggle_filters(selected_shark):
+    if selected_shark:
+        return {"display": "block"}  # Show filters if a shark is selected
+    return {"display": "none"}  # Hide filters otherwise
+
 # Callback to update the map and bar chart
 @app.callback(
     [Output('shark-map', 'figure'),
      Output('activity-bar-chart', 'figure')],
     [Input('shark-dropdown', 'value'),
+     Input('shark-length-slider', 'value'),
+     Input('provoked-status', 'value'),
+     Input('include-unknown-length', 'value'),
      Input('map-tabs', 'value')]
 )
-def update_map_and_chart(selected_shark, selected_tab):
+def update_map_and_chart(selected_shark, shark_length_range, provoked_status, include_unknown_length, selected_tab):
     # Filter the data based on the selected shark type
     filtered_df = df
     if selected_shark:
         filtered_df = filtered_df[filtered_df['Shark.common.name'] == selected_shark]
+
+    # Filter by shark length range
+    if 'include' in include_unknown_length:
+        filtered_df = filtered_df[(filtered_df['Shark.length.m'].isna()) |
+                                   ((filtered_df['Shark.length.m'] >= shark_length_range[0]) &
+                                    (filtered_df['Shark.length.m'] <= shark_length_range[1]))]
+    else:
+        filtered_df = filtered_df[(filtered_df['Shark.length.m'] >= shark_length_range[0]) &
+                                   (filtered_df['Shark.length.m'] <= shark_length_range[1])]
+
+    # Filter by provoked status
+    if provoked_status != "all":
+        filtered_df = filtered_df[filtered_df['Provoked/unprovoked'] == provoked_status]
 
     # Create the map figure
     if selected_tab == "heatmap":
@@ -106,7 +168,7 @@ def update_map_and_chart(selected_shark, selected_tab):
         x='Victim.activity',
         y='Count',
         title="Distribution of Victim.activity",
-        labels={"Victim.activity": "activity Type", "Count": "Count"},
+        labels={"Victim.activity": "Activity Type", "Count": "Count"},
     )
 
     return map_fig, bar_fig
