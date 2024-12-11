@@ -1,5 +1,5 @@
 from dash import Dash, html, dcc
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -42,8 +42,7 @@ app.layout = html.Div(
                             max=shark_length_max,
                             step=0.1,
                             marks={
-                                i: f"{i:.1f}" for i in [round(x, 1) for x in 
-                                    list(np.linspace(shark_length_min, shark_length_max, num=10))]
+                                i: f"{i:.1f}" for i in np.linspace(shark_length_min, shark_length_max, num=10)
                             },
                             value=[shark_length_min, shark_length_max],
                         ),
@@ -61,6 +60,11 @@ app.layout = html.Div(
                             id='include-unknown-length',
                             options=[{"label": "Include unknown lengths", "value": "include"}],
                             value=[]
+                        ),
+                        html.Button(
+                            "Reset Filters",
+                            id='reset-filters-button',
+                            style={"marginTop": "10px"}
                         ),
                     ]
                 ),
@@ -175,6 +179,18 @@ def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, i
     )
 
     return map_fig, bar_fig
+
+# Callback to reset filters
+@app.callback(
+    [Output('shark-dropdown', 'value'),
+     Output('shark-length-slider', 'value'),
+     Output('provoked-status', 'value'),
+     Output('include-unknown-length', 'value')],
+    Input('reset-filters-button', 'n_clicks'),
+    prevent_initial_call=True
+)
+def reset_filters(n_clicks):
+    return None, [shark_length_min, shark_length_max], "all", []
 
 # Run the server
 if __name__ == '__main__':
