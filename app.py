@@ -2,6 +2,7 @@ from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
+import numpy as np
 from jbi100_app.data import get_data
 
 # Load the data
@@ -27,7 +28,8 @@ app.layout = html.Div(
                     options=[
                         {"label": shark, "value": shark} for shark in df['Shark.common.name'].unique()
                     ],
-                    placeholder="Select a shark type",
+                    multi=True,
+                    placeholder="Select shark type(s)",
                 ),
                 html.Div(
                     id='filters-container',
@@ -40,7 +42,8 @@ app.layout = html.Div(
                             max=shark_length_max,
                             step=0.1,
                             marks={
-                                int(i): str(int(i)) for i in range(int(shark_length_min), int(shark_length_max) + 1, 1)
+                                i: f"{i:.1f}" for i in [round(x, 1) for x in 
+                                    list(np.linspace(shark_length_min, shark_length_max, num=10))]
                             },
                             value=[shark_length_min, shark_length_max],
                         ),
@@ -116,11 +119,11 @@ def toggle_filters(selected_shark):
      Input('include-unknown-length', 'value'),
      Input('map-tabs', 'value')]
 )
-def update_map_and_chart(selected_shark, shark_length_range, provoked_status, include_unknown_length, selected_tab):
-    # Filter the data based on the selected shark type
+def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, include_unknown_length, selected_tab):
+    # Filter the data based on the selected shark type(s)
     filtered_df = df
-    if selected_shark:
-        filtered_df = filtered_df[filtered_df['Shark.common.name'] == selected_shark]
+    if selected_sharks:
+        filtered_df = filtered_df[filtered_df['Shark.common.name'].isin(selected_sharks)]
 
     # Filter by shark length range
     if 'include' in include_unknown_length:
