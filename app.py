@@ -8,12 +8,20 @@ from jbi100_app.data import get_data
 # Load the data
 df = get_data()
 
+# Ensure that there's a 'Year' column in df. If not, you might need to extract the year from a date field.
+# For example, if there's a 'Date' column with datetime objects, you can do:
+# df['Year'] = df['Date'].dt.year
+
 # Initialize the Dash app
 app = Dash()
 
 # Get the range of shark lengths for the slider
 shark_length_min = df['Shark.length.m'].min()
 shark_length_max = df['Shark.length.m'].max()
+
+# Get the range of years for the year slider
+year_min = df['Incident.year'].min()
+year_max = df['Incident.year'].max()
 
 # Create the layout
 app.layout = html.Div(
@@ -84,25 +92,44 @@ app.layout = html.Div(
                     ],
                 ),
                 html.Div(
-                    style={"display": "flex", "flexDirection": "row", "height": "100%"},
+                    style={"display": "flex", "flexDirection": "column", "height": "100%"},
                     children=[
-                        # Map
-                        dcc.Graph(
-                            id='shark-map',
-                            style={"flex": "3", "marginRight": "10px"}
+                        # Map and bar chart
+                        html.Div(
+                            style={"display": "flex", "flexDirection": "row", "flex": 1},
+                            children=[
+                                dcc.Graph(
+                                    id='shark-map',
+                                    style={"flex": "3", "marginRight": "10px"}
+                                ),
+                                dcc.Graph(
+                                    id='activity-bar-chart',
+                                    style={"flex": "1"}
+                                )
+                            ]
                         ),
-                        # Bar chart
-                        dcc.Graph(
-                            id='activity-bar-chart',
-                            style={"flex": "1"}
-                        )
+                        # Year Range Slider below the map and chart
+                        html.Div(
+                            style={"marginTop": "20px"},
+                            children=[
+                                html.Label(id='slider-label'),  # Create a label for dynamic updates
+                                dcc.RangeSlider(
+                                    id='year-slider',
+                                    min=year_min,
+                                    max=year_max,
+                                    step=1,
+                                    marks={year: str(year) for year in range(year_min, year_max+1, 10)},
+                                    value=[year_min, year_max],
+                                    tooltip={"placement": "bottom", "always_visible": True}  # Enable tooltip
+                                )
+                            ]
+                        ),
                     ]
                 ),
             ]
         ),
     ]
 )
-
 # Callback to toggle filter visibility
 @app.callback(
     Output('filters-container', 'style'),
@@ -117,13 +144,16 @@ def toggle_filters(selected_shark):
 @app.callback(
     [Output('shark-map', 'figure'),
      Output('activity-bar-chart', 'figure')],
-    [Input('shark-dropdown', 'value'),
-     Input('shark-length-slider', 'value'),
-     Input('provoked-status', 'value'),
-     Input('include-unknown-length', 'value'),
-     Input('map-tabs', 'value')]
+    [
+        Input('shark-dropdown', 'value'),
+        Input('shark-length-slider', 'value'),
+        Input('provoked-status', 'value'),
+        Input('include-unknown-length', 'value'),
+        Input('map-tabs', 'value'),
+        Input('year-slider', 'value')
+    ]
 )
-def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, include_unknown_length, selected_tab):
+def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range):
     # Filter the data based on the selected shark type(s)
     filtered_df = df
     if selected_sharks:
@@ -131,16 +161,25 @@ def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, i
 
     # Filter by shark length range
     if 'include' in include_unknown_length:
-        filtered_df = filtered_df[(filtered_df['Shark.length.m'].isna()) |
-                                   ((filtered_df['Shark.length.m'] >= shark_length_range[0]) &
-                                    (filtered_df['Shark.length.m'] <= shark_length_range[1]))]
+        filtered_df = filtered_df[
+            (filtered_df['Shark.length.m'].isna()) |
+            ((filtered_df['Shark.length.m'] >= shark_length_range[0]) & (filtered_df['Shark.length.m'] <= shark_length_range[1]))
+        ]
     else:
-        filtered_df = filtered_df[(filtered_df['Shark.length.m'] >= shark_length_range[0]) &
-                                   (filtered_df['Shark.length.m'] <= shark_length_range[1])]
+        filtered_df = filtered_df[
+            (filtered_df['Shark.length.m'] >= shark_length_range[0]) &
+            (filtered_df['Shark.length.m'] <= shark_length_range[1])
+        ]
 
     # Filter by provoked status
     if provoked_status != "all":
         filtered_df = filtered_df[filtered_df['Provoked/unprovoked'] == provoked_status]
+
+    # Filter by year range
+    filtered_df = filtered_df[
+        (filtered_df['Incident.year'] >= year_range[0]) &
+        (filtered_df['Incident.year'] <= year_range[1])
+    ]
 
     # Create the map figure
     if selected_tab == "heatmap":
@@ -154,7 +193,7 @@ def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, i
             zoom=3,
             mapbox_style="open-street-map"
         )
-    elif selected_tab == "scatter":
+    else:  # selected_tab == "scatter"
         # Create scatter plot map
         map_fig = px.scatter_mapbox(
             filtered_df,
@@ -182,15 +221,25 @@ def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, i
 
 # Callback to reset filters
 @app.callback(
-    [Output('shark-dropdown', 'value'),
-     Output('shark-length-slider', 'value'),
-     Output('provoked-status', 'value'),
-     Output('include-unknown-length', 'value')],
+    [
+        Output('shark-dropdown', 'value'),
+        Output('shark-length-slider', 'value'),
+        Output('provoked-status', 'value'),
+        Output('include-unknown-length', 'value'),
+        Output('year-slider', 'value')
+    ],
     Input('reset-filters-button', 'n_clicks'),
     prevent_initial_call=True
 )
 def reset_filters(n_clicks):
-    return None, [shark_length_min, shark_length_max], "all", []
+    # Reset all filter components to their defaults
+    return (
+        None, 
+        [shark_length_min, shark_length_max], 
+        "all", 
+        [],
+        [year_min, year_max]
+    )
 
 # Run the server
 if __name__ == '__main__':
