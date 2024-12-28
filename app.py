@@ -34,11 +34,19 @@ app.layout = html.Div(
                 dcc.Dropdown(
                     id='shark-dropdown',
                     options=[
-                        {"label": shark, "value": shark} for shark in df['Shark.common.name'].unique()
+                        {"label": shark, "value": shark} for shark in df['Shark.full.name'].unique()
                     ],
                     multi=True,
                     placeholder="Select shark type(s)",
                 ),
+                # dcc.Dropdown(
+                #     id='injury-dropdown',
+                #     options=[
+                #         {"label": level, "value": level} for level in df['Victim.injury'].unique()
+                #     ],
+                #     multi=True,
+                #     placeholder="Select injury level(s)",
+                # ),
                 html.Div(
                     id='filters-container',
                     style={"display": "none"},  # Initially hidden
@@ -131,14 +139,14 @@ app.layout = html.Div(
     ]
 )
 # Callback to toggle filter visibility
-@app.callback(
-    Output('filters-container', 'style'),
-    Input('shark-dropdown', 'value')
-)
-def toggle_filters(selected_shark):
-    if selected_shark:
-        return {"display": "block"}  # Show filters if a shark is selected
-    return {"display": "none"}  # Hide filters otherwise
+# @app.callback(
+#     Output('filters-container', 'style'),
+#     Input('shark-dropdown', 'value')
+# )
+# def toggle_filters(selected_shark):
+#     if selected_shark:
+#         return {"display": "block"}  # Show filters if a shark is selected
+#     return {"display": "none"}  # Hide filters otherwise
 
 # Callback to update the map and bar chart
 @app.callback(
@@ -157,7 +165,7 @@ def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, i
     # Filter the data based on the selected shark type(s)
     filtered_df = df
     if selected_sharks:
-        filtered_df = filtered_df[filtered_df['Shark.common.name'].isin(selected_sharks)]
+        filtered_df = filtered_df[filtered_df['Shark.full.name'].isin(selected_sharks)]
 
     # Filter by shark length range
     if 'include' in include_unknown_length:
