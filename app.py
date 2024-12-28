@@ -31,6 +31,7 @@ app.layout = html.Div(
         html.Div(
             style={"width": "20%", "padding": "10px", "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)"},
             children=[
+                html.Label("Shark Type:"),
                 dcc.Dropdown(
                     id='shark-dropdown',
                     options=[
@@ -39,50 +40,46 @@ app.layout = html.Div(
                     multi=True,
                     placeholder="Select shark type(s)",
                 ),
-                # dcc.Dropdown(
-                #     id='injury-dropdown',
-                #     options=[
-                #         {"label": level, "value": level} for level in df['Victim.injury'].unique()
-                #     ],
-                #     multi=True,
-                #     placeholder="Select injury level(s)",
-                # ),
-                html.Div(
-                    id='filters-container',
-                    style={"display": "none"},  # Initially hidden
-                    children=[
-                        html.Label("Shark Length (meters):"),
-                        dcc.RangeSlider(
-                            id='shark-length-slider',
-                            min=shark_length_min,
-                            max=shark_length_max,
-                            step=0.1,
-                            marks={
-                                i: f"{i:.1f}" for i in np.linspace(shark_length_min, shark_length_max, num=10)
-                            },
-                            value=[shark_length_min, shark_length_max],
-                        ),
-                        html.Label("Provoked Status:"),
-                        dcc.RadioItems(
-                            id='provoked-status',
-                            options=[
-                                {"label": "All", "value": "all"},
-                                {"label": "Provoked", "value": "provoked"},
-                                {"label": "Unprovoked", "value": "unprovoked"},
-                            ],
-                            value="all",
-                        ),
-                        dcc.Checklist(
-                            id='include-unknown-length',
-                            options=[{"label": "Include unknown lengths", "value": "include"}],
-                            value=[]
-                        ),
-                        html.Button(
-                            "Reset Filters",
-                            id='reset-filters-button',
-                            style={"marginTop": "10px"}
-                        ),
-                    ]
+                html.Label("Victim Injury Level:"),
+                dcc.Dropdown(
+                    id='injury-dropdown',
+                    options=[
+                        {"label": level, "value": level} for level in df['Victim.injury'].unique()
+                    ],
+                    multi=True,
+                    placeholder="Select injury level(s)",
+                ),
+                html.Label("Shark Length (meters):"),
+                dcc.RangeSlider(
+                    id='shark-length-slider',
+                    min=shark_length_min,
+                    max=shark_length_max,
+                    step=0.1,
+                    marks={
+                        i: f"{i:.1f}" for i in np.linspace(shark_length_min, shark_length_max, num=10)
+                    },
+                    value=[shark_length_min, shark_length_max],
+                    tooltip={"placement": "bottom", "always_visible": True},
+                ),
+                dcc.Checklist(
+                    id='include-unknown-length',
+                    options=[{"label": "Include unknown lengths", "value": "include"}],
+                    value=[]
+                ),
+                html.Label("Provoked Status:"),
+                dcc.RadioItems(
+                    id='provoked-status',
+                    options=[
+                        {"label": "All", "value": "all"},
+                        {"label": "Provoked", "value": "provoked"},
+                        {"label": "Unprovoked", "value": "unprovoked"},
+                    ],
+                    value="all",
+                ),
+                html.Button(
+                    "Reset Filters",
+                    id='reset-filters-button',
+                    style={"marginTop": "10px"}
                 ),
             ],
         ),
@@ -129,6 +126,12 @@ app.layout = html.Div(
                                     marks={year: str(year) for year in range(year_min, year_max+1, 10)},
                                     value=[year_min, year_max],
                                     tooltip={"placement": "bottom", "always_visible": True}  # Enable tooltip
+                                ),
+                                html.Label("Percentage of rows kept after filtering:"),
+                                dcc.Input(
+                                    id='row-percentage',
+                                    value="100",
+                                    disabled=True
                                 )
                             ]
                         ),
@@ -138,22 +141,15 @@ app.layout = html.Div(
         ),
     ]
 )
-# Callback to toggle filter visibility
-# @app.callback(
-#     Output('filters-container', 'style'),
-#     Input('shark-dropdown', 'value')
-# )
-# def toggle_filters(selected_shark):
-#     if selected_shark:
-#         return {"display": "block"}  # Show filters if a shark is selected
-#     return {"display": "none"}  # Hide filters otherwise
 
 # Callback to update the map and bar chart
 @app.callback(
     [Output('shark-map', 'figure'),
      Output('activity-bar-chart', 'figure')],
+     Output('row-percentage', 'value'),
     [
         Input('shark-dropdown', 'value'),
+        Input('injury-dropdown', 'value'),
         Input('shark-length-slider', 'value'),
         Input('provoked-status', 'value'),
         Input('include-unknown-length', 'value'),
@@ -161,11 +157,16 @@ app.layout = html.Div(
         Input('year-slider', 'value')
     ]
 )
-def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range):
-    # Filter the data based on the selected shark type(s)
+def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range):
+
     filtered_df = df
+
+        # Filter the data based on the selected shark type(s)
     if selected_sharks:
         filtered_df = filtered_df[filtered_df['Shark.full.name'].isin(selected_sharks)]
+    # Filter the data based on the selected injury level(s)
+    if selected_injuries:
+        filtered_df = filtered_df[filtered_df['Victim.injury'].isin(selected_injuries)]
 
     # Filter by shark length range
     if 'include' in include_unknown_length:
@@ -188,6 +189,9 @@ def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, i
         (filtered_df['Incident.year'] >= year_range[0]) &
         (filtered_df['Incident.year'] <= year_range[1])
     ]
+
+    # Calculate the percentage of rows that were kept after filtering
+    row_percentage =  np.round(len(filtered_df)/len(df)*100,2)
 
     # Create the map figure
     if selected_tab == "heatmap":
@@ -225,7 +229,7 @@ def update_map_and_chart(selected_sharks, shark_length_range, provoked_status, i
         labels={"Victim.activity": "Activity Type", "Count": "Count"},
     )
 
-    return map_fig, bar_fig
+    return map_fig, bar_fig, row_percentage
 
 # Callback to reset filters
 @app.callback(
