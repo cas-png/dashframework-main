@@ -25,7 +25,7 @@ year_max = df['Incident.year'].max()
 
 # Create the layout
 app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
-    # Sidebar with dropdown and filters
+    # Sidebar with dropdown and filters --- TODO: Add more filters
     html.Div(style={'width': '20%', 'padding': '10px', 'background-color': '#f9f9f9', 'float': 'left', "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)"}, children=[
         # html.H1("Shark Attack Data"),
         # Dropdown for selecting shark type
@@ -123,7 +123,8 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             ),
         ]),
     ]),
-    # Bar chart for distributions
+    
+    # Bar chart for distributions --- TODO: Allow for changing the bar chart to show different data
     html.Div(style={'width': '20%', 'padding': '10px', 'background-color': '#f9f9f9', "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)", "display": "flex", "flexDirection": "column", "float": "right"}, children=[
         dcc.Graph(id='activity-bar-chart', style={"flex": "1"}),
     ]),
