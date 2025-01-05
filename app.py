@@ -1,8 +1,9 @@
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, dash_table
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 import pandas as pd
 import numpy as np
+import dash_bootstrap_components as dbc
 from jbi100_app.data import get_data
 
 # Load the data
@@ -13,7 +14,7 @@ df = get_data()
 # df['Year'] = df['Date'].dt.year
 
 # Initialize the Dash app
-app = Dash()
+app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # Get the range of shark lengths for the slider
 shark_length_min = df['Shark.length.m'].min()
@@ -36,7 +37,7 @@ categories = {"Incident.month": "Incident Month",
 
 # Create the layout
 app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
-    # Sidebar with dropdown and filters --- TODO: Add more filters
+    # Sidebar with dropdown and filters --- TODO: Add more filters and finish the modal for extra info (link to data source, and descriptions of each variable shown, make sure all variables used in the tool are included)
     html.Div(style={'width': '20%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)"}, children=[
         # html.H1("Shark Attack Data"),
         # Dropdown for selecting shark type
@@ -95,20 +96,27 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             style={"marginTop": "10px"}
         ),
         html.Br(),
-        # Display the percentage of rows kept after filtering
-        html.Div(style={"marginTop": "10px", "display": "flex", "flexDirection": "row"}, children=[
-            html.Label("After filtering, ", style={'white-space': 'pre'}),
-            html.Div(id='row-number'),
-            html.Label(" rows are kept", style={'white-space': 'pre'}),
-        ]),
-        html.Div(style={"display": "flex", "flexDirection": "row"}, children=[
-            html.Label("("),
-            html.Div(id='row-percentage'),
-            html.Label("% of total rows).")
-        ]),
+        html.Div(id='row-details', style={"marginTop": "10px"}),
+        # Modal for extra info
+        dbc.Button("Open modal", id="open-dismiss"),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(
+                    dbc.ModalTitle("Dismissing"), close_button=False
+                ),
+                dbc.ModalBody(
+                    dash_table.DataTable([{"Variable Name": value, "Column Name": key} for key, value in categories.items()]),
+                    html.Textarea("Shark.full.name is based on Shark.common.name and Shark.scientific.name.", style={"width": "100%", "height": "100px"})
+                ),
+                dbc.ModalFooter(dbc.Button("Close", id="close-dismiss")),
+            ],
+            id="modal-dismiss",
+            # keyboard=False,
+            # backdrop="static",
+        ),
     ]),
     
-    # Main content with map and timeline --- TODO: Fix layout
+    # Main content with map and timeline --- TODO: fix layout for the map (there is a LOT of empty space around the map and timeline that can be removed; also fix the legend blocking the map for some variables)
     html.Div(style={"width": "60%", "display": "flex", "flexDirection": "column", "padding": "10px"}, children=[
         # Tabs for switching between heatmap and scatter plot
         dcc.Tabs(
@@ -170,8 +178,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         Output('shark-map', 'figure'),
         Output('activity-bar-chart', 'figure'),
         Output('timeline', 'figure'),
-        Output('row-percentage', 'children'),
-        Output('row-number', 'children'),
+        Output('row-details', 'children')
     ],
     [
         Input('shark-dropdown', 'value'),
@@ -219,6 +226,9 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
     # Calculate the percentage of rows that were kept after filtering
     row_percentage =  np.round(len(filtered_df)/len(df)*100,2)
     row_number = len(filtered_df)
+    row_details = f"After filtering, {row_number} rows are kept ({row_percentage}% of total rows)."
+    if row_number == 1:
+        row_details = f"After filtering, {row_number} row is kept ({row_percentage}% of total rows)."
     
     # Create the map figure
     if selected_tab == "heatmap":
@@ -267,7 +277,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
         labels={"Incident.date": "Date", "count": "Frequency"},
     )
 
-    return map_fig, bar_fig, timeline_fig, row_percentage, row_number
+    return map_fig, bar_fig, timeline_fig, row_details
 
 # Callback to reset filters
 @app.callback(
@@ -290,6 +300,16 @@ def reset_filters(n_clicks):
         [],
         [year_min, year_max]
     )
+
+@app.callback(
+    Output("modal-dismiss", "is_open"),
+    [Input("open-dismiss", "n_clicks"), Input("close-dismiss", "n_clicks")],
+    [State("modal-dismiss", "is_open")],
+)
+def toggle_modal(n_open, n_close, is_open):
+    if n_open or n_close:
+        return not is_open
+    return is_open
 
 # Run the server
 if __name__ == '__main__':
