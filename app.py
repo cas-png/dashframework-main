@@ -97,7 +97,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         ]),
     ]),
     
-    # Main content with map and tabs
+    # Main content with map and timeline --- TODO: Add a timeline
     html.Div(style={"width": "60%", "display": "flex", "flexDirection": "column", "padding": "10px"}, children=[
         # Tabs for switching between heatmap and scatter plot
         dcc.Tabs(
