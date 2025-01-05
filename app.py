@@ -104,10 +104,10 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 dbc.ModalHeader(
                     dbc.ModalTitle("Dismissing"), close_button=False
                 ),
-                dbc.ModalBody(
+                dbc.ModalBody(children=[
                     dash_table.DataTable([{"Variable Name": value, "Column Name": key} for key, value in categories.items()]),
                     html.Textarea("Shark.full.name is based on Shark.common.name and Shark.scientific.name.", style={"width": "100%", "height": "100px"})
-                ),
+            ]),
                 dbc.ModalFooter(dbc.Button("Close", id="close-dismiss")),
             ],
             id="modal-dismiss",
