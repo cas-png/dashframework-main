@@ -132,7 +132,13 @@ app.layout = html.Div(
                                     id='row-percentage',
                                     value="100",
                                     disabled=True
-                                )
+                                ),
+                                html.Label("Number of rows kept after filtering:"),
+                                dcc.Input(
+                                    id='row-number',
+                                    value="1233",
+                                    disabled=True
+                                ),
                             ]
                         ),
                     ]
@@ -144,9 +150,12 @@ app.layout = html.Div(
 
 # Callback to update the map and bar chart
 @app.callback(
-    [Output('shark-map', 'figure'),
-     Output('activity-bar-chart', 'figure')],
-     Output('row-percentage', 'value'),
+    [
+        Output('shark-map', 'figure'),
+        Output('activity-bar-chart', 'figure'),
+        Output('row-percentage', 'value'),
+        Output('row-number', 'value'),
+    ],
     [
         Input('shark-dropdown', 'value'),
         Input('injury-dropdown', 'value'),
@@ -192,7 +201,8 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
 
     # Calculate the percentage of rows that were kept after filtering
     row_percentage =  np.round(len(filtered_df)/len(df)*100,2)
-
+    row_number = len(filtered_df)
+    
     # Create the map figure
     if selected_tab == "heatmap":
         # Create density map (heatmap)
@@ -229,7 +239,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
         labels={"Victim.activity": "Activity Type", "Count": "Count"},
     )
 
-    return map_fig, bar_fig, row_percentage
+    return map_fig, bar_fig, row_percentage, row_number
 
 # Callback to reset filters
 @app.callback(
