@@ -24,137 +24,118 @@ year_min = df['Incident.year'].min()
 year_max = df['Incident.year'].max()
 
 # Create the layout
-app.layout = html.Div(
-    style={"height": "100vh", "width": "100vw", "margin": 0, "padding": 0, "display": "flex"},  # Full-screen container
-    children=[
-        # Sidebar with dropdown and filters
-        html.Div(
-            style={"width": "20%", "padding": "10px", "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)"},
+app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
+    # Sidebar with dropdown and filters
+    html.Div(style={'width': '20%', 'padding': '10px', 'background-color': '#f9f9f9', 'float': 'left', "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)"}, children=[
+        # html.H1("Shark Attack Data"),
+        # Dropdown for selecting shark type
+        html.Label("Shark Type:"),
+        dcc.Dropdown(
+            id='shark-dropdown',
+            options=[{"label": shark, "value": shark} for shark in df['Shark.full.name'].unique()],
+            multi=True,
+            placeholder="Select shark type(s)",
+        ),
+                html.Br(),
+        # Dropdown for selecting injury level
+        html.Label("Victim Injury Level:"),
+        dcc.Dropdown(
+            id='injury-dropdown',
+            options=[{"label": level, "value": level} for level in df['Victim.injury'].unique()],
+            multi=True,
+            placeholder="Select injury level(s)",
+        ),
+        html.Br(),
+        # Range slider for shark length
+        html.Label("Shark Length (meters):"),
+        dcc.RangeSlider(
+            id='shark-length-slider',
+            min=shark_length_min,
+            max=shark_length_max,
+            step=0.1,
+            marks={i: f"{i:.1f}" for i in np.linspace(shark_length_min, shark_length_max, num=10)},
+            value=[shark_length_min, shark_length_max],
+            tooltip={"placement": "bottom", "always_visible": True},
+        ),
+        html.Br(),
+        # Checkbox for including unknown lengths
+        dcc.Checklist(
+            id='include-unknown-length',
+            options=[{"label": "Include unknown lengths", "value": "include"}],
+            value=[]
+        ),
+        html.Br(),
+        # Radio items for provoked status
+        html.Label("Provoked Status:"),
+        dcc.RadioItems(
+            id='provoked-status',
+            options=[
+                {"label": "All", "value": "all"},
+                {"label": "Provoked", "value": "provoked"},
+                {"label": "Unprovoked", "value": "unprovoked"},
+            ],
+            value="all",
+        ),
+        html.Br(),
+        # Reset filters button
+        html.Button(
+            "Reset Filters",
+            id='reset-filters-button',
+            style={"marginTop": "10px"}
+        ),
+        html.Br(),
+        # Display the percentage of rows kept after filtering
+        html.Div(style={"marginTop": "10px", "display": "flex", "flexDirection": "row"}, children=[
+            html.Label("After filtering, ", style={'white-space': 'pre'}),
+            html.Div(id='row-number'),
+            html.Label(" rows are kept", style={'white-space': 'pre'}),
+        ]),
+        html.Div(style={"display": "flex", "flexDirection": "row"}, children=[
+            html.Label("("),
+            html.Div(id='row-percentage'),
+            html.Label("% of total rows).")
+        ]),
+    ]),
+    
+    # Main content with map and tabs
+    html.Div(style={"width": "60%", "display": "flex", "flexDirection": "column", "padding": "10px"}, children=[
+        # Tabs for switching between heatmap and scatter plot
+        dcc.Tabs(
+            id="map-tabs",
+            value="heatmap",  # Default tab
             children=[
-                html.Label("Shark Type:"),
-                dcc.Dropdown(
-                    id='shark-dropdown',
-                    options=[
-                        {"label": shark, "value": shark} for shark in df['Shark.full.name'].unique()
-                    ],
-                    multi=True,
-                    placeholder="Select shark type(s)",
-                ),
-                html.Label("Victim Injury Level:"),
-                dcc.Dropdown(
-                    id='injury-dropdown',
-                    options=[
-                        {"label": level, "value": level} for level in df['Victim.injury'].unique()
-                    ],
-                    multi=True,
-                    placeholder="Select injury level(s)",
-                ),
-                html.Label("Shark Length (meters):"),
-                dcc.RangeSlider(
-                    id='shark-length-slider',
-                    min=shark_length_min,
-                    max=shark_length_max,
-                    step=0.1,
-                    marks={
-                        i: f"{i:.1f}" for i in np.linspace(shark_length_min, shark_length_max, num=10)
-                    },
-                    value=[shark_length_min, shark_length_max],
-                    tooltip={"placement": "bottom", "always_visible": True},
-                ),
-                dcc.Checklist(
-                    id='include-unknown-length',
-                    options=[{"label": "Include unknown lengths", "value": "include"}],
-                    value=[]
-                ),
-                html.Label("Provoked Status:"),
-                dcc.RadioItems(
-                    id='provoked-status',
-                    options=[
-                        {"label": "All", "value": "all"},
-                        {"label": "Provoked", "value": "provoked"},
-                        {"label": "Unprovoked", "value": "unprovoked"},
-                    ],
-                    value="all",
-                ),
-                html.Button(
-                    "Reset Filters",
-                    id='reset-filters-button',
-                    style={"marginTop": "10px"}
-                ),
+                dcc.Tab(label="Heatmap", value="heatmap"),
+                dcc.Tab(label="Scatter Plot", value="scatter"),
             ],
         ),
-        # Main content with map and bar chart
-        html.Div(
-            style={"width": "80%", "display": "flex", "flexDirection": "column", "padding": "10px"},
-            children=[
-                # Tabs for switching between heatmap and scatter plot
-                dcc.Tabs(
-                    id="map-tabs",
-                    value="heatmap",  # Default tab
-                    children=[
-                        dcc.Tab(label="Heatmap", value="heatmap"),
-                        dcc.Tab(label="Scatter Plot", value="scatter"),
-                    ],
-                ),
-                html.Div(
-                    style={"display": "flex", "flexDirection": "column", "height": "100%"},
-                    children=[
-                        # Map and bar chart
-                        html.Div(
-                            style={"display": "flex", "flexDirection": "row", "flex": 1},
-                            children=[
-                                dcc.Graph(
-                                    id='shark-map',
-                                    style={"flex": "3", "marginRight": "10px"}
-                                ),
-                                dcc.Graph(
-                                    id='activity-bar-chart',
-                                    style={"flex": "1"}
-                                )
-                            ]
-                        ),
-                        # Year Range Slider below the map and chart
-                        html.Div(
-                            style={"marginTop": "20px"},
-                            children=[
-                                html.Label(id='slider-label'),  # Create a label for dynamic updates
-                                dcc.RangeSlider(
-                                    id='year-slider',
-                                    min=year_min,
-                                    max=year_max,
-                                    step=1,
-                                    marks={year: str(year) for year in range(year_min, year_max+1, 10)},
-                                    value=[year_min, year_max],
-                                    tooltip={"placement": "bottom", "always_visible": True}  # Enable tooltip
-                                ),
-                                html.Label("Percentage of rows kept after filtering:"),
-                                dcc.Input(
-                                    id='row-percentage',
-                                    value="100",
-                                    disabled=True
-                                ),
-                                html.Label("Number of rows kept after filtering:"),
-                                dcc.Input(
-                                    id='row-number',
-                                    value="1233",
-                                    disabled=True
-                                ),
-                            ]
-                        ),
-                    ]
-                ),
-            ]
-        ),
-    ]
-)
+        html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%", "padding": "10px"}, children=[
+            dcc.Graph(id='shark-map', style={"flex": "3", "marginRight": "10px"}),
+            # Year Range Slider below the map
+            html.Label(id='slider-label'),  # Create a label for dynamic updates
+            dcc.RangeSlider(
+                id='year-slider',
+                min=year_min,
+                max=year_max,
+                step=1,
+                marks={year: str(year) for year in range(year_min, year_max+1, 10)},
+                value=[year_min, year_max],
+                tooltip={"placement": "bottom", "always_visible": True}  # Enable tooltip
+            ),
+        ]),
+    ]),
+    # Bar chart for distributions
+    html.Div(style={'width': '20%', 'padding': '10px', 'background-color': '#f9f9f9', "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)", "display": "flex", "flexDirection": "column", "float": "right"}, children=[
+        dcc.Graph(id='activity-bar-chart', style={"flex": "1"}),
+    ]),
+])
 
 # Callback to update the map and bar chart
 @app.callback(
     [
         Output('shark-map', 'figure'),
         Output('activity-bar-chart', 'figure'),
-        Output('row-percentage', 'value'),
-        Output('row-number', 'value'),
+        Output('row-percentage', 'children'),
+        Output('row-number', 'children'),
     ],
     [
         Input('shark-dropdown', 'value'),
