@@ -152,13 +152,12 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
 
     filtered_df = df
 
-        # Filter the data based on the selected shark type(s)
+    # Filter the data based on the selected shark type(s)
     if selected_sharks:
         filtered_df = filtered_df[filtered_df['Shark.full.name'].isin(selected_sharks)]
     # Filter the data based on the selected injury level(s)
     if selected_injuries:
         filtered_df = filtered_df[filtered_df['Victim.injury'].isin(selected_injuries)]
-
     # Filter by shark length range
     if 'include' in include_unknown_length:
         filtered_df = filtered_df[
