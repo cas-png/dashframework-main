@@ -23,6 +23,17 @@ shark_length_max = df['Shark.length.m'].max()
 year_min = df['Incident.year'].min()
 year_max = df['Incident.year'].max()
 
+categories = {"Incident.month": "Incident Month", 
+              "Injury.severity": "Victim Injury Severity", 
+              "Victim.injury": "Victim Injury Result", 
+              "State": "State", 
+              "Site.category": "Location Type", 
+              "Shark.full.name": "Shark Type", 
+              "Provoked/unprovoked": "Provoked", 
+              "Victim.activity": "Victim Activity",
+              "Victim.gender": "Victim Gender",
+              "Data.source": "Source Type"}
+
 # Create the layout
 app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
     # Sidebar with dropdown and filters --- TODO: Add more filters
@@ -97,7 +108,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         ]),
     ]),
     
-    # Main content with map and timeline --- TODO: Add a timeline
+    # Main content with map and timeline --- TODO: Fix layout
     html.Div(style={"width": "60%", "display": "flex", "flexDirection": "column", "padding": "10px"}, children=[
         # Tabs for switching between heatmap and scatter plot
         dcc.Tabs(
@@ -109,7 +120,9 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             ],
         ),
         html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%", "padding": "10px"}, children=[
-            dcc.Graph(id='shark-map', style={"flex": "3", "marginRight": "10px"}),
+            html.Div(style={"display": "flex", "height": "60%", "width": "100%"}, children=[dcc.Graph(id='shark-map')]),
+            html.Div(style={"display": "flex", "height": "40%", "width": "100%"}, children=[dcc.Graph(id='timeline')]),
+            
             # Year Range Slider below the map
             html.Label(id='slider-label'),  # Create a label for dynamic updates
             dcc.RangeSlider(
@@ -119,13 +132,34 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 step=1,
                 marks={year: str(year) for year in range(year_min, year_max+1, 10)},
                 value=[year_min, year_max],
-                tooltip={"placement": "bottom", "always_visible": True}  # Enable tooltip
+                tooltip={"placement": "bottom", "always_visible": False}, # Enable tooltip
+                allowCross=False,
+                dots=False
             ),
         ]),
     ]),
     
-    # Bar chart for distributions --- TODO: Allow for changing the bar chart to show different data
+    # Bar chart for distributions
     html.Div(style={'width': '20%', 'padding': '10px', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "-5px 5px 5px rgba(0, 0, 0, 0.3)", "display": "flex", "flexDirection": "column"}, children=[
+        dcc.Dropdown(
+            id='var-select',
+            options=[
+                {"label": categories[category], "value": category} for category in categories
+                # {"label": varname, "value": varname} for varname in df.columns.values
+                # {"label": "Incident Month", "value": "Incident.month"},
+                # {"label": "Victim Injury Severity", "value": "Injury.severity"},
+                # {"label": "Victim Injury Result", "value": "Victim.injury"},
+                # {"label": "State", "value": "State"},
+                # {"label": "Location Type", "value": "Site.category"},
+                # {"label": "Shark Type", "value": "Shark.full.name"},
+                # {"label": "Provoked", "value": "Provoked/unprovoked"},
+                # {"label": "Victim Activity", "value": "Victim.activity"},
+                # {"label": "Victim Gender", "value": "Victim.gender"},
+                # {"label": "Source Type", "value": "Data.source"},
+            ],
+            placeholder="Select a variable",
+            value="Victim.injury"
+        ),
         dcc.Graph(id='activity-bar-chart', style={"flex": "1"}),
     ]),
 ])
@@ -135,6 +169,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
     [
         Output('shark-map', 'figure'),
         Output('activity-bar-chart', 'figure'),
+        Output('timeline', 'figure'),
         Output('row-percentage', 'children'),
         Output('row-number', 'children'),
     ],
@@ -145,10 +180,11 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         Input('provoked-status', 'value'),
         Input('include-unknown-length', 'value'),
         Input('map-tabs', 'value'),
-        Input('year-slider', 'value')
+        Input('year-slider', 'value'),
+        Input('var-select', 'value')
     ]
 )
-def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range):
+def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var):
 
     filtered_df = df
 
@@ -202,25 +238,36 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
             filtered_df,
             lat='Latitude',
             lon='Longitude',
-            color='Victim.injury',  # Color by incident type
+            color=selected_var,  # Color by incident type
             hover_name='Shark.common.name',  # Display shark name on hover
             center=dict(lat=-23, lon=132),  # Center of Australia
             zoom=3,
-            mapbox_style="open-street-map"
+            mapbox_style="open-street-map",
+            labels={selected_var: categories[selected_var]},
         )
 
     # Create the bar chart figure
-    activity_counts = filtered_df['Victim.activity'].value_counts().reset_index()
-    activity_counts.columns = ['Victim.activity', 'Count']
+    activity_counts = filtered_df[selected_var].value_counts().reset_index()
+    activity_counts.columns = [selected_var, 'Count']
     bar_fig = px.bar(
         activity_counts,
-        x='Victim.activity',
+        x=selected_var,
         y='Count',
-        title="Distribution of Victim.activity",
-        labels={"Victim.activity": "Activity Type", "Count": "Count"},
+        title="Distribution of "+selected_var,
+        # nbins=20,
+        labels={selected_var: categories[selected_var], "Count": "Count"},
     )
 
-    return map_fig, bar_fig, row_percentage, row_number
+    # create the timeline histogram
+    timeline_fig = px.histogram(
+        filtered_df,
+        x="Incident.date",
+        nbins=50,
+        title="Timeline of Incidents",
+        labels={"Incident.date": "Date", "count": "Frequency"},
+    )
+
+    return map_fig, bar_fig, timeline_fig, row_percentage, row_number
 
 # Callback to reset filters
 @app.callback(

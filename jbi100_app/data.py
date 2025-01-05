@@ -15,4 +15,6 @@ def get_data():
     #               - all variations of "whaler shark ([])" were replaced by "whaler shark (Carcharhinidae)"
     #               - row 1223 was "lemon shark", replaced by "lemon shark (Negaprion brevirostris)"
     # Any further data preprocessing can go here
+    df2=pd.DataFrame({'month':df['Incident.month'], 'year':df['Incident.year']})
+    df['Incident.date']=pd.to_datetime(df2[['year','month']].assign(day=1))
     return df
