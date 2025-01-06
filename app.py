@@ -1,24 +1,41 @@
-from dash import Dash, html, dcc
-from dash.dependencies import Input, Output
+from dash import Dash, html, dcc, dash_table
+from dash.dependencies import Input, Output, State
 import plotly.express as px
 import pandas as pd
+import numpy as np
+import dash_bootstrap_components as dbc
 from jbi100_app.data import get_data
 
 # Load the data
 df = get_data()
 
+# Ensure that there's a 'Year' column in df. If not, you might need to extract the year from a date field.
+# For example, if there's a 'Date' column with datetime objects, you can do:
+# df['Year'] = df['Date'].dt.year
+
 # Initialize the Dash app
-app = Dash()
+app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+# Get the range of shark lengths for the slider
+shark_length_min = df['Shark.length.m'].min()
+shark_length_max = df['Shark.length.m'].max()
+
+# Get the range of years for the year slider
+year_min = df['Incident.year'].min()
+year_max = df['Incident.year'].max()
+
+categories = {"Incident.month": "Incident Month", 
+              "Injury.severity": "Victim Injury Severity", 
+              "Victim.injury": "Victim Injury Result", 
+              "State": "State", 
+              "Site.category": "Location Type", 
+              "Shark.full.name": "Shark Type", 
+              "Provoked/unprovoked": "Provoked", 
+              "Victim.activity": "Victim Activity",
+              "Victim.gender": "Victim Gender",
+              "Data.source": "Source Type"}
 
 # Create the layout
-<<<<<<< Updated upstream
-app.layout = html.Div(
-    style={"height": "100vh", "width": "100vw", "margin": 0, "padding": 0, "display": "flex"},  # Full-screen container
-    children=[
-        # Sidebar with dropdown
-        html.Div(
-            style={"width": "20%", "padding": "10px", "boxShadow": "2px 0px 5px rgba(0, 0, 0, 0.1)"},
-=======
 app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
     # Sidebar with dropdown and filters --- TODO: Add more filters and finish the modal for extra info (link to data source, and descriptions of each variable shown, make sure all variables used in the tool are included)
     html.Div(style={'width': '20%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)"}, children=[
@@ -106,48 +123,11 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         dcc.Tabs(
             id="map-tabs",
             value="heatmap",  # Default tab
->>>>>>> Stashed changes
             children=[
-                dcc.Dropdown(
-                    id='shark-dropdown',
-                    options=[
-                        {"label": shark, "value": shark} for shark in df['Shark.common.name'].unique()
-                    ],
-                    placeholder="Select a shark type",
-                ),
+                dcc.Tab(label="Heatmap", value="heatmap"),
+                dcc.Tab(label="Scatter Plot", value="scatter"),
             ],
         ),
-<<<<<<< Updated upstream
-        # Main content with map and bar chart
-        html.Div(
-            style={"width": "80%", "display": "flex", "flexDirection": "column", "padding": "10px"},
-            children=[
-                # Tabs for switching between heatmap and scatter plot
-                dcc.Tabs(
-                    id="map-tabs",
-                    value="heatmap",  # Default tab
-                    children=[
-                        dcc.Tab(label="Heatmap", value="heatmap"),
-                        dcc.Tab(label="Scatter Plot", value="scatter"),
-                    ],
-                ),
-                html.Div(
-                    style={"display": "flex", "flexDirection": "row", "height": "100%"},
-                    children=[
-                        # Map
-                        dcc.Graph(
-                            id='shark-map',
-                            style={"flex": "3", "marginRight": "10px"}
-                        ),
-                        # Bar chart
-                        dcc.Graph(
-                            id='activity-bar-chart',
-                            style={"flex": "1"}
-                        )
-                    ]
-                ),
-            ]
-=======
 
         # ### CHANGED: Make this Div the parent container for both graphs,
         # with enough height to hold them
@@ -156,7 +136,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 "display": "flex",
                 "flexDirection": "column",
                 "height": "80%",   # adjust as needed
-                "padding": "0px"
+                "padding": "10px"
             },
             children=[
                 # ### CHANGED: Make the map figure occupy 80% of the container
@@ -219,24 +199,69 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             ],
             placeholder="Select a variable",
             value="Victim.injury"
->>>>>>> Stashed changes
         ),
-    ]
-)
+        dcc.Graph(id='activity-bar-chart', style={"flex": "1"}),
+    ]),
+])
 
 # Callback to update the map and bar chart
 @app.callback(
-    [Output('shark-map', 'figure'),
-     Output('activity-bar-chart', 'figure')],
-    [Input('shark-dropdown', 'value'),
-     Input('map-tabs', 'value')]
+    [
+        Output('shark-map', 'figure'),
+        Output('activity-bar-chart', 'figure'),
+        Output('timeline', 'figure'),
+        Output('row-details', 'children')
+    ],
+    [
+        Input('shark-dropdown', 'value'),
+        Input('injury-dropdown', 'value'),
+        Input('shark-length-slider', 'value'),
+        Input('provoked-status', 'value'),
+        Input('include-unknown-length', 'value'),
+        Input('map-tabs', 'value'),
+        Input('year-slider', 'value'),
+        Input('var-select', 'value')
+    ]
 )
-def update_map_and_chart(selected_shark, selected_tab):
-    # Filter the data based on the selected shark type
-    filtered_df = df
-    if selected_shark:
-        filtered_df = filtered_df[filtered_df['Shark.common.name'] == selected_shark]
+def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var):
 
+    filtered_df = df
+
+    # Filter the data based on the selected shark type(s)
+    if selected_sharks:
+        filtered_df = filtered_df[filtered_df['Shark.full.name'].isin(selected_sharks)]
+    # Filter the data based on the selected injury level(s)
+    if selected_injuries:
+        filtered_df = filtered_df[filtered_df['Victim.injury'].isin(selected_injuries)]
+    # Filter by shark length range
+    if 'include' in include_unknown_length:
+        filtered_df = filtered_df[
+            (filtered_df['Shark.length.m'].isna()) |
+            ((filtered_df['Shark.length.m'] >= shark_length_range[0]) & (filtered_df['Shark.length.m'] <= shark_length_range[1]))
+        ]
+    else:
+        filtered_df = filtered_df[
+            (filtered_df['Shark.length.m'] >= shark_length_range[0]) &
+            (filtered_df['Shark.length.m'] <= shark_length_range[1])
+        ]
+
+    # Filter by provoked status
+    if provoked_status != "all":
+        filtered_df = filtered_df[filtered_df['Provoked/unprovoked'] == provoked_status]
+
+    # Filter by year range
+    filtered_df = filtered_df[
+        (filtered_df['Incident.year'] >= year_range[0]) &
+        (filtered_df['Incident.year'] <= year_range[1])
+    ]
+
+    # Calculate the percentage of rows that were kept after filtering
+    row_percentage =  np.round(len(filtered_df)/len(df)*100,2)
+    row_number = len(filtered_df)
+    row_details = f"After filtering, {row_number} rows are kept ({row_percentage}% of total rows)."
+    if row_number == 1:
+        row_details = f"After filtering, {row_number} row is kept ({row_percentage}% of total rows)."
+    
     # Create the map figure
     if selected_tab == "heatmap":
         # Create density map (heatmap)
@@ -249,32 +274,75 @@ def update_map_and_chart(selected_shark, selected_tab):
             zoom=3,
             mapbox_style="open-street-map"
         )
-    elif selected_tab == "scatter":
+    else:  # selected_tab == "scatter"
         # Create scatter plot map
         map_fig = px.scatter_mapbox(
             filtered_df,
             lat='Latitude',
             lon='Longitude',
-            color='Victim.injury',  # Color by incident type
+            color=selected_var,  # Color by incident type
             hover_name='Shark.common.name',  # Display shark name on hover
             center=dict(lat=-23, lon=132),  # Center of Australia
             zoom=3,
-            mapbox_style="open-street-map"
+            mapbox_style="open-street-map",
+            labels={selected_var: categories[selected_var]},
         )
 
     # Create the bar chart figure
-    activity_counts = filtered_df['Victim.activity'].value_counts().reset_index()
-    activity_counts.columns = ['Victim.activity', 'Count']
+    activity_counts = filtered_df[selected_var].value_counts().reset_index()
+    activity_counts.columns = [selected_var, 'Count']
     bar_fig = px.bar(
         activity_counts,
-        x='Victim.activity',
+        x=selected_var,
         y='Count',
-        title="Distribution of Victim.activity",
-        labels={"Victim.activity": "activity Type", "Count": "Count"},
+        title="Distribution of "+selected_var,
+        # nbins=20,
+        labels={selected_var: categories[selected_var], "Count": "Count"},
     )
 
-    return map_fig, bar_fig
+    # create the timeline histogram
+    timeline_fig = px.histogram(
+        filtered_df,
+        x="Incident.date",
+        nbins=50,
+        title="Timeline of Incidents",
+        labels={"Incident.date": "Date", "count": "Frequency"},
+    )
+
+    return map_fig, bar_fig, timeline_fig, row_details
+
+# Callback to reset filters
+@app.callback(
+    [
+        Output('shark-dropdown', 'value'),
+        Output('shark-length-slider', 'value'),
+        Output('provoked-status', 'value'),
+        Output('include-unknown-length', 'value'),
+        Output('year-slider', 'value')
+    ],
+    Input('reset-filters-button', 'n_clicks'),
+    prevent_initial_call=True
+)
+def reset_filters(n_clicks):
+    # Reset all filter components to their defaults
+    return (
+        None, 
+        [shark_length_min, shark_length_max], 
+        "all", 
+        [],
+        [year_min, year_max]
+    )
+
+@app.callback(
+    Output("modal-dismiss", "is_open"),
+    [Input("open-dismiss", "n_clicks"), Input("close-dismiss", "n_clicks")],
+    [State("modal-dismiss", "is_open")],
+)
+def toggle_modal(n_open, n_close, is_open):
+    if n_open or n_close:
+        return not is_open
+    return is_open
 
 # Run the server
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=True)
+    app.run_server(debug=True, use_reloader=False)
