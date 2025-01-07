@@ -136,7 +136,6 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 "display": "flex",
                 "flexDirection": "column",
                 "height": "80%",   # adjust as needed
-                "padding": "10px"
             },
             children=[
                 # ### CHANGED: Make the map figure occupy 80% of the container
@@ -305,7 +304,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
         filtered_df,
         x="Incident.date",
         height=250,
-        nbins=20,
+        nbins=100,
         title="Timeline of Incidents",
         labels={"Incident.date": "", "count": "Frequency"},
     )
