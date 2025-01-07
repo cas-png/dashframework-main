@@ -266,6 +266,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
         # Create density map (heatmap)
         map_fig = px.density_mapbox(
             filtered_df,
+
             lat='Latitude',
             lon='Longitude',
             radius=5,
@@ -287,6 +288,8 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
             labels={selected_var: categories[selected_var]},
         )
 
+    map_fig.update_layout(margin=dict(l=5, r=5, t=5, b=5))
+
     # Create the bar chart figure
     activity_counts = filtered_df[selected_var].value_counts().reset_index()
     activity_counts.columns = [selected_var, 'Count']
@@ -303,11 +306,12 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
     timeline_fig = px.histogram(
         filtered_df,
         x="Incident.date",
-        height=250,
         nbins=100,
         title="Timeline of Incidents",
         labels={"Incident.date": "", "count": "Frequency"},
     )
+
+    timeline_fig.update_layout(margin=dict(l=5, r=5, t=40, b=20))
 
     return map_fig, bar_fig, timeline_fig, row_details
 
