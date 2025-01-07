@@ -36,7 +36,7 @@ categories = {"Incident.month": "Incident Month",
               "Data.source": "Source Type"}
 
 # Create the layout
-app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
+app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": "10px", "display": "flex"}, children=[ # Full-screen container
     # Sidebar with dropdown and filters --- TODO: Add more filters and finish the modal for extra info (link to data source, and descriptions of each variable shown, make sure all variables used in the tool are included)
     html.Div(style={'width': '20%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)"}, children=[
         # html.H1("Shark Attack Data"),
@@ -74,7 +74,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         dcc.Checklist(
             id='include-unknown-length',
             options=[{"label": "Include unknown lengths", "value": "include"}],
-            value=[]
+            value=["include"]
         ),
         html.Br(),
         # Radio items for provoked status
@@ -121,10 +121,10 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         # Tabs for switching between heatmap and scatter plot
         dcc.Tabs(
             id="map-tabs",
-            value="heatmap",  # Default tab
+            value="scatter",  # Default tab
             children=[
-                dcc.Tab(label="Heatmap", value="heatmap"),
                 dcc.Tab(label="Scatter Plot", value="scatter"),
+                dcc.Tab(label="Heatmap", value="heatmap"),
             ],
         ),
         html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%", "padding": "10px"}, children=[
@@ -145,6 +145,24 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 dots=False
             ),
         ]),
+        # html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%", "padding": "0px"}, children=[
+        #     dcc.Graph(id='shark-map'),
+        #     html.Div(style={"display": "flex", "height": "40%", "width": "100%", "padding": "0px"}, children=[dcc.Graph(id='timeline')]),
+            
+        #     # Year Range Slider below the map
+        #     html.Label(id='slider-label'),  # Create a label for dynamic updates
+        #     dcc.RangeSlider(
+        #         id='year-slider',
+        #         min=year_min,
+        #         max=year_max,
+        #         step=1,
+        #         marks={year: str(year) for year in range(year_min, year_max+1, 10)},
+        #         value=[year_min, year_max],
+        #         tooltip={"placement": "bottom", "always_visible": False}, # Enable tooltip
+        #         allowCross=False,
+        #         dots=False
+        #     ),
+        # ]),
     ]),
     
     # Bar chart for distributions
@@ -153,22 +171,11 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             id='var-select',
             options=[
                 {"label": categories[category], "value": category} for category in categories
-                # {"label": varname, "value": varname} for varname in df.columns.values
-                # {"label": "Incident Month", "value": "Incident.month"},
-                # {"label": "Victim Injury Severity", "value": "Injury.severity"},
-                # {"label": "Victim Injury Result", "value": "Victim.injury"},
-                # {"label": "State", "value": "State"},
-                # {"label": "Location Type", "value": "Site.category"},
-                # {"label": "Shark Type", "value": "Shark.full.name"},
-                # {"label": "Provoked", "value": "Provoked/unprovoked"},
-                # {"label": "Victim Activity", "value": "Victim.activity"},
-                # {"label": "Victim Gender", "value": "Victim.gender"},
-                # {"label": "Source Type", "value": "Data.source"},
             ],
             placeholder="Select a variable",
             value="Victim.injury"
         ),
-        dcc.Graph(id='activity-bar-chart', style={"flex": "1"}),
+        dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%"}),
     ]),
 ])
 
@@ -297,7 +304,7 @@ def reset_filters(n_clicks):
         None, 
         [shark_length_min, shark_length_max], 
         "all", 
-        [],
+        ["include"],
         [year_min, year_max]
     )
 
@@ -313,4 +320,4 @@ def toggle_modal(n_open, n_close, is_open):
 
 # Run the server
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=False)
+    app.run_server(debug=True, use_reloader=True)
