@@ -151,7 +151,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 ),
                 # ### CHANGED: Make the timeline figure occupy 20% of the container
                 html.Div(
-                    style={"display": "flex", "height": "20%", "width": "100%"},
+                    style={"display": "flex", "height": "40%", "width": "100%"},
                     children=[
                         dcc.Graph(
                             id='timeline',
@@ -304,9 +304,10 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
     timeline_fig = px.histogram(
         filtered_df,
         x="Incident.date",
-        nbins=50,
+        height=250,
+        nbins=20,
         title="Timeline of Incidents",
-        labels={"Incident.date": "Date", "count": "Frequency"},
+        labels={"Incident.date": "", "count": "Frequency"},
     )
 
     return map_fig, bar_fig, timeline_fig, row_details
@@ -345,4 +346,4 @@ def toggle_modal(n_open, n_close, is_open):
 
 # Run the server
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=False)
+    app.run_server(debug=True, use_reloader=True)
