@@ -5,8 +5,13 @@ import pandas as pd
 def get_data():
     df= pd.read_excel('./jbi100_app/dataset/data_modified_new.xlsx', index_col=0)
     df['Shark.common.name'] = df['Shark.common.name'].fillna("unknown") # fill missing values with "unknown"
-    df['Victim.injury'] = df['Victim.injury'].replace(['injured', 'injury', 'Injured'], 'injured') # standardize injury names
+    df['Victim.injury'] = df['Victim.injury'].replace(['injured', 'injury', 'Injured'], 'injured') # standardize injury result names
     df['Victim.activity'] = df['Victim.activity'].fillna("unknown") # fill missing values with "unknown"
+    df['Injury.severity'] = df['Injury.severity'].replace(['fatal', 'fatality'], 'fatal') # standardize injury severity names
+    df['Injury.severity'] = df['Injury.severity'].fillna("unknown") # fill missing values with "unknown"
+    df['Victim.gender'] = df['Victim.gender'].fillna("unknown") # fill missing values with "unknown"
+    df['Data.source'] = df['Data.source'].fillna("unknown") # fill missing values with "unknown"
+    df['Provoked/unprovoked'] = df['Provoked/unprovoked'].fillna("unknown") # fill missing values with "unknown"
     df['Incident.year'] = df['Incident.year'].astype(str).str.replace(',', '').astype(int) # remove commas and convert to int
     df['Shark.full.name'] = df['Shark.full.name'].fillna("unknown")
     #df['Shark.full.name'] is generated in the excel file as Shark.common.name + " (" + Shark.scientific.name + ")"

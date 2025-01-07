@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
 from jbi100_app.data import get_data
+import plotly.graph_objects as go
 
 # Load the data
 df = get_data()
@@ -35,6 +36,18 @@ categories = {"Incident.month": "Incident Month",
               "Victim.gender": "Victim Gender",
               "Data.source": "Source Type"}
 
+category_info = {"Incident Date": "Based on Incident.year and Incident.month", 
+                 "Victim Injury Severity": "Injury.severity", 
+                 "Victim Injury Result": "Victim.injury", 
+                 "State": "State", 
+                 "Location Type": "Site.category", 
+                 "Shark Type": "Based on Shark.common.name and Shark.scientific.name", 
+                 "Provoked": "Provoked/unprovoked", 
+                 "Victim Activity": "Victim.activity",
+                 "Victim Gender": "Victim.gender",
+                 "Source Type": "Data.source",
+                 "Shark Length": "Shark.length.m"} #TODO double check if this is correct and complete
+
 # Create the layout
 app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": "10px", "display": "flex"}, children=[ # Full-screen container
     # Sidebar with dropdown and filters --- TODO: Add more filters and finish the modal for extra info (link to data source, and descriptions of each variable shown, make sure all variables used in the tool are included)
@@ -48,7 +61,6 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             multi=True,
             placeholder="Select shark type(s)",
         ),
-                html.Br(),
         # Dropdown for selecting injury level
         html.Label("Victim Injury Level:"),
         dcc.Dropdown(
@@ -57,7 +69,63 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             multi=True,
             placeholder="Select injury level(s)",
         ),
-        html.Br(),
+        # Dropdown for selecting injury severity
+        html.Label("Victim Injury Severity:"),
+        dcc.Dropdown(
+            id='injury-severity-dropdown',
+            options=[{"label": level, "value": level} for level in df['Injury.severity'].unique()],
+            multi=True,
+            placeholder="Select injury severity(s)",
+        ),
+        # Dropdown for selecting injury severity
+        html.Label("State:"),
+        dcc.Dropdown(
+            id='state-dropdown',
+            options=[{"label": level, "value": level} for level in df['State'].unique()],
+            multi=True,
+            placeholder="Select state(s)",
+        ),
+        #Site.category
+        html.Label("Location Type:"),
+        dcc.Dropdown(
+            id='site-dropdown',
+            options=[{"label": level, "value": level} for level in df['Site.category'].unique()],
+            multi=True,
+            placeholder="Select state(s)",
+        ),
+        #Victim.gender
+        html.Label("Victim Gender:"),
+        dcc.Dropdown(
+            id='gender-dropdown',
+            options=[{"label": level, "value": level} for level in df['Victim.gender'].unique()],
+            multi=True,
+            placeholder="Select gender(s)",
+        ),
+        #Data.source
+        html.Label("Data Source:"),
+        dcc.Dropdown(
+            id='source-dropdown',
+            options=[{"label": level, "value": level} for level in df['Data.source'].unique()],
+            multi=True,
+            placeholder="Select source(s)",
+        ),
+        #Victim.activity
+        html.Label("Victim Activity:"),
+        dcc.Dropdown(
+            id='victim-activity-dropdown',
+            options=[{"label": level, "value": level} for level in df['Victim.activity'].unique()],
+            multi=True,
+            placeholder="Select activity(s)",
+        ),
+        # Dropdown for provoked status
+        html.Label("Provoked Status:"),
+        dcc.Dropdown(
+            id='provoked-status',
+            options=[{"label": level, "value": level} for level in df['Provoked/unprovoked'].unique()],
+            multi=True,
+            placeholder="Select provoked status",
+        ),
+        # html.Br(),
         # Range slider for shark length
         html.Label("Shark Length (meters):"),
         dcc.RangeSlider(
@@ -69,55 +137,47 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             value=[shark_length_min, shark_length_max],
             tooltip={"placement": "bottom", "always_visible": True},
         ),
-        html.Br(),
+        # html.Br(),
         # Checkbox for including unknown lengths
         dcc.Checklist(
             id='include-unknown-length',
-            options=[{"label": "Include unknown lengths", "value": "include"}],
+            options=[{"label": " Include unknown lengths", "value": "include"}],
             value=["include"]
         ),
-        html.Br(),
-        # Radio items for provoked status
-        html.Label("Provoked Status:"),
-        dcc.RadioItems(
-            id='provoked-status',
-            options=[
-                {"label": "All", "value": "all"},
-                {"label": "Provoked", "value": "provoked"},
-                {"label": "Unprovoked", "value": "unprovoked"},
-            ],
-            value="all",
-        ),
-        html.Br(),
+        # html.Br(),
         # Reset filters button
         html.Button(
             "Reset Filters",
             id='reset-filters-button',
-            style={"marginTop": "10px"}
         ),
         html.Br(),
-        html.Div(id='row-details', style={"marginTop": "10px"}),
+        html.Div(id='row-details'),
         # Modal for extra info
-        dbc.Button("Open modal", id="open-dismiss"),
+        dbc.Button("Info", id="open-dismiss"),
         dbc.Modal(
             [
                 dbc.ModalHeader(
-                    dbc.ModalTitle("Dismissing"), close_button=False
+                    dbc.ModalTitle("Tool and Data Information"), close_button=False
                 ),
                 dbc.ModalBody(children=[
-                    dash_table.DataTable([{"Variable Name": value, "Column Name": key} for key, value in categories.items()]),
-                    html.Textarea("Shark.full.name is based on Shark.common.name and Shark.scientific.name.", style={"width": "100%", "height": "100px"})
+                    html.Div("The table below lists each variable shown in the tool and provides the columns from the data source that are used in that variable."),
+                    dash_table.DataTable([{"Variable Name": key, "Details": value} for key, value in category_info.items()]),
+                    html.Div("Tool created by JBI100 team 30 (2024 Q2)."),
+                    dbc.Button("Visualisation Tool GitHub", href="https://github.com/cas-png/dashframework-main"),
+                    dbc.Button("Data Source GitHub", href="https://github.com/cjabradshaw/AustralianSharkIncidentDatabase"),
+                    dbc.Button("Video Presentation", href="/"),
             ]),
                 dbc.ModalFooter(dbc.Button("Close", id="close-dismiss")),
             ],
             id="modal-dismiss",
             # keyboard=False,
             # backdrop="static",
+            fullscreen=True,
         ),
     ]),
     
     # Main content with map and timeline --- TODO: fix layout for the map (there is a LOT of empty space around the map and timeline that can be removed; also fix the legend blocking the map for some variables)
-    html.Div(style={"width": "60%", "display": "flex", "flexDirection": "column", "padding": "10px"}, children=[
+    html.Div(style={"width": "50%", "display": "flex", "flexDirection": "column", "padding": "10px"}, children=[
         # Tabs for switching between heatmap and scatter plot
         dcc.Tabs(
             id="map-tabs",
@@ -145,28 +205,10 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 dots=False
             ),
         ]),
-        # html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%", "padding": "0px"}, children=[
-        #     dcc.Graph(id='shark-map'),
-        #     html.Div(style={"display": "flex", "height": "40%", "width": "100%", "padding": "0px"}, children=[dcc.Graph(id='timeline')]),
-            
-        #     # Year Range Slider below the map
-        #     html.Label(id='slider-label'),  # Create a label for dynamic updates
-        #     dcc.RangeSlider(
-        #         id='year-slider',
-        #         min=year_min,
-        #         max=year_max,
-        #         step=1,
-        #         marks={year: str(year) for year in range(year_min, year_max+1, 10)},
-        #         value=[year_min, year_max],
-        #         tooltip={"placement": "bottom", "always_visible": False}, # Enable tooltip
-        #         allowCross=False,
-        #         dots=False
-        #     ),
-        # ]),
     ]),
     
     # Bar chart for distributions
-    html.Div(style={'width': '20%', 'padding': '10px', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "-5px 5px 5px rgba(0, 0, 0, 0.3)", "display": "flex", "flexDirection": "column"}, children=[
+    html.Div(style={'width': '30%', 'padding': '10px', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "-5px 5px 5px rgba(0, 0, 0, 0.3)", "display": "flex", "flexDirection": "column"}, children=[
         dcc.Dropdown(
             id='var-select',
             options=[
@@ -175,7 +217,19 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             placeholder="Select a variable",
             value="Victim.injury"
         ),
-        dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%"}),
+        dcc.Dropdown(
+            id='var-select2',
+            options=[
+                {"label": categories[category], "value": category} for category in categories
+            ],
+            placeholder="Select a variable",
+            value="Provoked/unprovoked"
+        ),
+        html.Div(style={"display": "flex", "flexDirection": "row", "flex": "1", "width": "100%", "height": "50%"}, children=[
+            dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%"}),
+            dcc.Graph(id='activity-bar-chart2', style={"flex": "1", "width": "100%"}),
+        ]),
+        dcc.Graph(id='heat-chart', style={"flex": "1", "width": "100%"}),
     ]),
 ])
 
@@ -184,21 +238,30 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
     [
         Output('shark-map', 'figure'),
         Output('activity-bar-chart', 'figure'),
+        Output('activity-bar-chart2', 'figure'),
+        Output('heat-chart', 'figure'),        
         Output('timeline', 'figure'),
         Output('row-details', 'children')
     ],
     [
         Input('shark-dropdown', 'value'),
         Input('injury-dropdown', 'value'),
+        Input('injury-severity-dropdown', 'value'),
+        Input('victim-activity-dropdown', 'value'),
+        Input('source-dropdown', 'value'),
+        Input('gender-dropdown', 'value'),
+        Input('site-dropdown', 'value'),
+        Input('state-dropdown', 'value'),
         Input('shark-length-slider', 'value'),
         Input('provoked-status', 'value'),
         Input('include-unknown-length', 'value'),
         Input('map-tabs', 'value'),
         Input('year-slider', 'value'),
-        Input('var-select', 'value')
+        Input('var-select', 'value'),
+        Input('var-select2', 'value'),
     ]
 )
-def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var):
+def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_severities, selected_activities, selected_sources, selected_genders, selected_sites, selected_states, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var, selected_var2):
 
     filtered_df = df
 
@@ -208,6 +271,24 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
     # Filter the data based on the selected injury level(s)
     if selected_injuries:
         filtered_df = filtered_df[filtered_df['Victim.injury'].isin(selected_injuries)]
+    # Filter the data based on the selected injury severity(s)
+    if selected_injury_severities:
+        filtered_df = filtered_df[filtered_df['Injury.severity'].isin(selected_injury_severities)]
+    # Filter the data based on the selected injury severity(s)
+    if selected_activities:
+        filtered_df = filtered_df[filtered_df['Victim.activity'].isin(selected_activities)]
+    # Filter the data based on the selected data source(s)
+    if selected_sources:
+        filtered_df = filtered_df[filtered_df['Data.source'].isin(selected_sources)]
+    # Filter the data based on the selected gender(s)
+    if selected_genders:
+        filtered_df = filtered_df[filtered_df['Victim.gender'].isin(selected_genders)]
+    # Filter the data based on the selected site(s)
+    if selected_sites:
+        filtered_df = filtered_df[filtered_df['Site.category'].isin(selected_sites)]
+    # Filter the data based on the selected state(s)
+    if selected_states:
+        filtered_df = filtered_df[filtered_df['State'].isin(selected_states)]
     # Filter by shark length range
     if 'include' in include_unknown_length:
         filtered_df = filtered_df[
@@ -221,8 +302,10 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
         ]
 
     # Filter by provoked status
-    if provoked_status != "all":
-        filtered_df = filtered_df[filtered_df['Provoked/unprovoked'] == provoked_status]
+    if provoked_status:
+        filtered_df = filtered_df[filtered_df['Provoked/unprovoked'].isin(provoked_status)]
+    # if provoked_status != "all":
+    #     filtered_df = filtered_df[filtered_df['Provoked/unprovoked'] == provoked_status]
 
     # Filter by year range
     filtered_df = filtered_df[
@@ -245,8 +328,8 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
             lat='Latitude',
             lon='Longitude',
             radius=5,
-            center=dict(lat=-23, lon=132),  # Center of Australia
-            zoom=3,
+            center=dict(lat=-28, lon=132), #center=dict(lat=-23, lon=132),  # Center of Australia
+            zoom=1.7,
             mapbox_style="open-street-map"
         )
     else:  # selected_tab == "scatter"
@@ -256,9 +339,9 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
             lat='Latitude',
             lon='Longitude',
             color=selected_var,  # Color by incident type
-            hover_name='Shark.common.name',  # Display shark name on hover
-            center=dict(lat=-23, lon=132),  # Center of Australia
-            zoom=3,
+            hover_name='Shark.full.name',  # Display shark name on hover
+            center=dict(lat=-28, lon=132),
+            zoom=1.7,
             mapbox_style="open-street-map",
             labels={selected_var: categories[selected_var]},
         )
@@ -270,10 +353,37 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
         activity_counts,
         x=selected_var,
         y='Count',
-        title="Distribution of "+selected_var,
+        title=categories[selected_var],
         # nbins=20,
         labels={selected_var: categories[selected_var], "Count": "Count"},
     )
+
+    # Create the second bar chart figure
+    activity_counts2 = filtered_df[selected_var2].value_counts().reset_index()
+    activity_counts2.columns = [selected_var2, 'Count']
+    bar_fig2 = px.bar(
+        activity_counts2,
+        x=selected_var2,
+        y='Count',
+        title=categories[selected_var2],
+        # nbins=20,
+        labels={selected_var2: categories[selected_var2], "Count": "Count"},
+    )
+
+    # # Create the heatmap figure
+    # heat_fig = px.density_heatmap(
+    #     filtered_df,
+    #     x=selected_var,
+    #     y=selected_var2,
+    #     labels={selected_var: categories[selected_var], selected_var2: categories[selected_var2]},
+    #     text_auto=True,
+    # )
+
+    heat_fig = go.Figure(go.Histogram2d(
+        x=filtered_df[selected_var],
+        y=filtered_df[selected_var2],
+        # legend={selected_var: categories[selected_var2], selected_var2: categories[selected_var2]},
+    ))
 
     # create the timeline histogram
     timeline_fig = px.histogram(
@@ -284,7 +394,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, shark_length_range,
         labels={"Incident.date": "Date", "count": "Frequency"},
     )
 
-    return map_fig, bar_fig, timeline_fig, row_details
+    return map_fig, bar_fig, bar_fig2, heat_fig, timeline_fig, row_details
 
 # Callback to reset filters
 @app.callback(
