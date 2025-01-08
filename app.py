@@ -188,8 +188,8 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             ],
         ),
         html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%", "padding": "10px"}, children=[
-            html.Div(style={"display": "flex", "height": "60%", "width": "100%"}, children=[dcc.Graph(id='shark-map')]),
-            html.Div(style={"display": "flex", "height": "40%", "width": "100%"}, children=[dcc.Graph(id='timeline')]),
+            html.Div(style={"display": "flex", "height": "70%", "width": "100%"}, children=[dcc.Graph(id='shark-map')]),
+            html.Div(style={"display": "flex", "height": "30%", "width": "100%"}, children=[dcc.Graph(id='timeline')]),
             
             # Year Range Slider below the map
             html.Label(id='slider-label'),  # Create a label for dynamic updates
@@ -329,7 +329,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             lon='Longitude',
             radius=5,
             center=dict(lat=-28, lon=132), #center=dict(lat=-23, lon=132),  # Center of Australia
-            zoom=1.7,
+            zoom=2.2,
             mapbox_style="open-street-map"
         )
     else:  # selected_tab == "scatter"
@@ -341,10 +341,12 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             color=selected_var,  # Color by incident type
             hover_name='Shark.full.name',  # Display shark name on hover
             center=dict(lat=-28, lon=132),
-            zoom=1.7,
+            zoom=2.2,
             mapbox_style="open-street-map",
             labels={selected_var: categories[selected_var]},
         )
+
+    map_fig.update_layout(margin=dict(l=5, r=5, t=5, b=5))
 
     # Create the bar chart figure
     activity_counts = filtered_df[selected_var].value_counts().reset_index()
@@ -389,10 +391,13 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
     timeline_fig = px.histogram(
         filtered_df,
         x="Incident.date",
-        nbins=50,
+        nbins=100,
+        height=200,
         title="Timeline of Incidents",
-        labels={"Incident.date": "Date", "count": "Frequency"},
+        labels={"Incident.date": "", "count": "Frequency"},
     )
+
+    timeline_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
     return map_fig, bar_fig, bar_fig2, heat_fig, timeline_fig, row_details
 
