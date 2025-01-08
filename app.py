@@ -32,7 +32,7 @@ categories = {"Incident.month": "Incident Month",
               "Victim.injury": "Victim Injury Result", 
               "State": "State", 
               "Site.category": "Location Type", 
-              "Shark.full.name": "Shark Type", 
+              "Shark.common.name": "Shark Type",
               "Provoked/unprovoked": "Provoked", 
               "Victim.activity": "Victim Activity",
               "Victim.gender": "Victim Gender",
@@ -43,7 +43,7 @@ category_info = {"Incident Date": "Based on Incident.year and Incident.month",
                  "Victim Injury Result": "Victim.injury", 
                  "State": "State", 
                  "Location Type": "Site.category", 
-                 "Shark Type": "Based on Shark.common.name and Shark.scientific.name", 
+                 "Shark Type": "Shark.common.name",
                  "Provoked": "Provoked/unprovoked", 
                  "Victim Activity": "Victim.activity",
                  "Victim Gender": "Victim.gender",
@@ -53,15 +53,16 @@ category_info = {"Incident Date": "Based on Incident.year and Incident.month",
 # Create the layout
 app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
     # Sidebar with dropdown and filters --- TODO: Add more filters and finish the modal for extra info (link to data source, and descriptions of each variable shown, make sure all variables used in the tool are included)
-    html.Div(style={'width': '20%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)"}, children=[
+    html.Div(style={'width': '20%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)", "fontSize": "12px"}, children=[
         # html.H1("Shark Attack Data"),
         # Dropdown for selecting shark type
         html.Label("Shark Type:"),
         dcc.Dropdown(
             id='shark-dropdown',
-            options=[{"label": shark, "value": shark} for shark in df['Shark.full.name'].unique()],
+            options=[{"label": shark, "value": shark} for shark in df['Shark.common.name'].unique()],
             multi=True,
             placeholder="Select shark type(s)",
+            style={"fontSize": "12px", "maxHeight": "100px"}
         ),
         # Dropdown for selecting injury level
         html.Label("Victim Injury Level:"),
@@ -169,7 +170,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                     dbc.Button("Data Source GitHub", href="https://github.com/cjabradshaw/AustralianSharkIncidentDatabase"),
                     dbc.Button("Video Presentation", href="/"),
             ]),
-                dbc.ModalFooter(dbc.Button("Close", id="close-dismiss")),
+                dbc.ModalFooter(dbc.Button("Close", id="close-dismiss"), className="justify-content-center")
             ],
             id="modal-dismiss",
             # keyboard=False,
@@ -178,7 +179,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         ),
     ]),
     
-    # Main content with map and timeline --- TODO: fix layout for the map (there is a LOT of empty space around the map and timeline that can be removed; also fix the legend blocking the map for some variables)
+    # Main content with map and timeline ---
     html.Div(style={"width": "50%", "display": "flex", "flexDirection": "column"}, children=[
         # Tabs for switching between heatmap and scatter plot
         dcc.Tabs(
@@ -190,8 +191,8 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             ],
         ),
         html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%"}, children=[
-            html.Div(style={"display": "flex", "height": "80%", "width": "100%"}, children=[dcc.Graph(id='shark-map', style={"width": "100%", "height": "100%"})]),
-            html.Div(style={"display": "flex", "height": "40%", "width": "100%"}, children=[dcc.Graph(id='timeline', style={"width": "100%", "height": "100%"})]),
+            html.Div(style={"display": "flex", "height": "65%", "width": "100%"}, children=[dcc.Graph(id='shark-map', style={"width": "100%", "height": "100%", "border": "2px solid black"})]),
+            html.Div(style={"display": "flex", "height": "25%", "justifyContent": "center", "width": "100%"}, children=[dcc.Graph(id='timeline', style={"width": "100%", "height": "100%", "border": "2px solid red"})]),
             
             # Year Range Slider below the map
             html.Label(id='slider-label'),  # Create a label for dynamic updates
@@ -228,10 +229,10 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             value="Provoked/unprovoked"
         ),
         html.Div(style={"display": "flex", "flexDirection": "row", "flex": "1", "width": "100%", "height": "50%"}, children=[
-            dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%"}),
-            dcc.Graph(id='activity-bar-chart2', style={"flex": "1", "width": "100%"}),
+            dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid red"}),
+            dcc.Graph(id='activity-bar-chart2', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid black"}),
         ]),
-        dcc.Graph(id='heat-chart', style={"flex": "1", "width": "100%"}),
+        dcc.Graph(id='heat-chart', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid blue"}),
     ]),
 ])
 
@@ -269,7 +270,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
 
     # Filter the data based on the selected shark type(s)
     if selected_sharks:
-        filtered_df = filtered_df[filtered_df['Shark.full.name'].isin(selected_sharks)]
+        filtered_df = filtered_df[filtered_df['Shark.common.name'].isin(selected_sharks)]
     # Filter the data based on the selected injury level(s)
     if selected_injuries:
         filtered_df = filtered_df[filtered_df['Victim.injury'].isin(selected_injuries)]
@@ -330,8 +331,8 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             lat='Latitude',
             lon='Longitude',
             radius=5,
-            center=dict(lat=-28, lon=132), #center=dict(lat=-23, lon=132),  # Center of Australia
-            zoom=2.2,
+            center=dict(lat=-28, lon=130), #center=dict(lat=-23, lon=132),  # Center of Australia
+            zoom=2.5,
             mapbox_style="open-street-map"
         )
     else:  # selected_tab == "scatter"
@@ -341,9 +342,9 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             lat='Latitude',
             lon='Longitude',
             color=selected_var,  # Color by incident type
-            hover_name='Shark.full.name',  # Display shark name on hover
-            center=dict(lat=-28, lon=132),
-            zoom=2.2,
+            hover_name='Shark.common.name',  # Display shark name on hover
+            center=dict(lat=-28, lon=130),
+            zoom=2.5,
             mapbox_style="open-street-map",
             labels={selected_var: categories[selected_var]},
         )
