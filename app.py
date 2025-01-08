@@ -53,7 +53,7 @@ category_info = {"Incident Date": "Based on Incident.year and Incident.month",
 # Create the layout
 app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
     # Sidebar with dropdown and filters --- TODO: Add more filters and finish the modal for extra info (link to data source, and descriptions of each variable shown, make sure all variables used in the tool are included)
-    html.Div(style={'width': '20%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)", "fontSize": "12px"}, children=[
+    html.Div(style={'width': '15%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)", "fontSize": "12px"}, children=[
         # html.H1("Shark Attack Data"),
         # Dropdown for selecting shark type
         html.Label("Shark Type:"),
@@ -211,7 +211,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
     ]),
     
     # Bar chart for distributions
-    html.Div(style={'width': '30%', 'padding': '10px', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "-5px 5px 5px rgba(0, 0, 0, 0.3)", "display": "flex", "flexDirection": "column"}, children=[
+    html.Div(style={'width': '35%', 'padding': '10px', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "-5px 5px 5px rgba(0, 0, 0, 0.3)", "display": "flex", "flexDirection": "column"}, children=[
         dcc.Dropdown(
             id='var-select',
             options=[
@@ -229,6 +229,11 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             placeholder="Select a variable",
             value="Provoked/unprovoked",
             clearable=False
+        ),
+        html.Div([
+            html.Button("Switch Axes for Bar Chart 1", id='switch-axes-bar1', n_clicks=0),
+            html.Button("Switch Axes for Bar Chart 2", id='switch-axes-bar2', n_clicks=0),
+            ], style={'display': 'flex', 'justify-content': 'space-between', 'margin': '10px 0'}
         ),
         html.Div(style={"display": "flex", "flexDirection": "row", "flex": "1", "width": "100%", "height": "50%"}, children=[
             dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid red"}),
@@ -264,9 +269,11 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         Input('year-slider', 'value'),
         Input('var-select', 'value'),
         Input('var-select2', 'value'),
+        Input('switch-axes-bar1', 'n_clicks'),
+        Input('switch-axes-bar2', 'n_clicks')
     ]
 )
-def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_severities, selected_activities, selected_sources, selected_genders, selected_sites, selected_states, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var, selected_var2):
+def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_severities, selected_activities, selected_sources, selected_genders, selected_sites, selected_states, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var, selected_var2, n_clicks_bar1, n_clicks_bar2):
 
     filtered_df = df
 
@@ -355,29 +362,38 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
 
     map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
 
+
+
     # Create the bar chart figure
+    switch_bar1 = n_clicks_bar1 % 2 == 1
+    bar1_x, bar1_y = (selected_var, 'Count') if not switch_bar1 else ('Count', selected_var)
     activity_counts = filtered_df[selected_var].value_counts().reset_index()
     activity_counts.columns = [selected_var, 'Count']
     bar_fig = px.bar(
         activity_counts,
-        x=selected_var,
-        y='Count',
-        title=categories[selected_var],
+        x=bar1_x,
+        y=bar1_y,
+        # title=categories[selected_var],
         # nbins=20,
         labels={selected_var: categories[selected_var], "Count": "Count"},
     )
+    bar_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
     # Create the second bar chart figure
+    switch_bar2 = n_clicks_bar2 % 2 == 1
+    bar2_x, bar2_y = (selected_var2, 'Count') if not switch_bar2 else ('Count', selected_var2)
+
     activity_counts2 = filtered_df[selected_var2].value_counts().reset_index()
     activity_counts2.columns = [selected_var2, 'Count']
     bar_fig2 = px.bar(
         activity_counts2,
-        x=selected_var2,
-        y='Count',
-        title=categories[selected_var2],
+        x=bar2_x,
+        y=bar2_y,
+        # title=categories[selected_var2],
         # nbins=20,
         labels={selected_var2: categories[selected_var2], "Count": "Count"},
     )
+    bar_fig2.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
     # # Create the heatmap figure
     # heat_fig = px.density_heatmap(
