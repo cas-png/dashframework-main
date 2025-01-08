@@ -456,4 +456,4 @@ def toggle_modal(n_open, n_close, is_open):
 
 # Run the server
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=True)
+    app.run_server(debug=True, use_reloader=True, dev_tools_ui=False) # set tools ui False removes blue circle
