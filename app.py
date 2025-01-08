@@ -348,7 +348,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             labels={selected_var: categories[selected_var]},
         )
 
-    map_fig.update_layout(margin=dict(l=5, r=5, t=5, b=5))
+    map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
 
     # Create the bar chart figure
     activity_counts = filtered_df[selected_var].value_counts().reset_index()
