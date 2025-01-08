@@ -4,6 +4,8 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
+from pandas import wide_to_long
+
 from jbi100_app.data import get_data
 import plotly.graph_objects as go
 
@@ -49,7 +51,7 @@ category_info = {"Incident Date": "Based on Incident.year and Incident.month",
                  "Shark Length": "Shark.length.m"} #TODO double check if this is correct and complete
 
 # Create the layout
-app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": "10px", "display": "flex"}, children=[ # Full-screen container
+app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
     # Sidebar with dropdown and filters --- TODO: Add more filters and finish the modal for extra info (link to data source, and descriptions of each variable shown, make sure all variables used in the tool are included)
     html.Div(style={'width': '20%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)"}, children=[
         # html.H1("Shark Attack Data"),
@@ -177,7 +179,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
     ]),
     
     # Main content with map and timeline --- TODO: fix layout for the map (there is a LOT of empty space around the map and timeline that can be removed; also fix the legend blocking the map for some variables)
-    html.Div(style={"width": "50%", "display": "flex", "flexDirection": "column", "padding": "10px"}, children=[
+    html.Div(style={"width": "50%", "display": "flex", "flexDirection": "column"}, children=[
         # Tabs for switching between heatmap and scatter plot
         dcc.Tabs(
             id="map-tabs",
@@ -187,9 +189,9 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 dcc.Tab(label="Heatmap", value="heatmap"),
             ],
         ),
-        html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%", "padding": "10px"}, children=[
-            html.Div(style={"display": "flex", "height": "70%", "width": "100%"}, children=[dcc.Graph(id='shark-map')]),
-            html.Div(style={"display": "flex", "height": "30%", "width": "100%"}, children=[dcc.Graph(id='timeline')]),
+        html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%"}, children=[
+            html.Div(style={"display": "flex", "height": "80%", "width": "100%"}, children=[dcc.Graph(id='shark-map', style={"width": "100%", "height": "100%"})]),
+            html.Div(style={"display": "flex", "height": "40%", "width": "100%"}, children=[dcc.Graph(id='timeline', style={"width": "100%", "height": "100%"})]),
             
             # Year Range Slider below the map
             html.Label(id='slider-label'),  # Create a label for dynamic updates
@@ -397,7 +399,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         labels={"Incident.date": "", "count": "Frequency"},
     )
 
-    timeline_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
+    timeline_fig.update_layout(margin=dict(l=10, r=50, t=60, b=5))
 
     return map_fig, bar_fig, bar_fig2, heat_fig, timeline_fig, row_details
 
