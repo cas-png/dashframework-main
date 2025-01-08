@@ -191,7 +191,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             ],
         ),
         html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%"}, children=[
-            html.Div(style={"display": "flex", "height": "65%", "width": "100%"}, children=[dcc.Graph(id='shark-map', style={"width": "100%", "height": "100%", "border": "2px solid black"})]),
+            html.Div(style={"display": "flex", "height": "65%", "width": "100%"}, children=[dcc.Graph(id='shark-map', style={"width": "100%", "height": "100%", "border": "2px solid black"}, config={"scrollZoom": True})]),
             html.Div(style={"display": "flex", "height": "25%", "width": "100%"}, children=[dcc.Graph(id='timeline', style={"width": "100%", "height": "100%", "border": "2px solid red"})]),
             
             # Year Range Slider below the map
@@ -239,7 +239,8 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid red"}),
             dcc.Graph(id='activity-bar-chart2', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid black"}),
         ]),
-        dcc.Graph(id='heat-chart', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid blue"}),
+        html.Div(style={"display": "flex", "flexDirection": "column", "width": "100%", "height": "35%"}, children=[
+        dcc.Graph(id='heat-chart', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid blue"})])
     ]),
 ])
 
@@ -359,9 +360,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             color_discrete_sequence = px.colors.qualitative.Light24 # changes colourmap
         )
         map_fig.update_traces(marker=dict(size=8)) # changes dot size
-
-    map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
-
+        map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
 
 
     # Create the bar chart figure
@@ -419,7 +418,6 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         title="Timeline of Incidents",
         labels={"Incident.date": "", "count": "Frequency"},
     )
-
     timeline_fig.update_layout(margin=dict(l=10, r=50, t=60, b=5))
 
     return map_fig, bar_fig, bar_fig2, heat_fig, timeline_fig, row_details
