@@ -180,7 +180,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
     ]),
     
     # Main content with map and timeline ---
-    html.Div(style={"width": "50%", "display": "flex", "flexDirection": "column"}, children=[
+    html.Div(style={"width": "45%", "display": "flex", "flexDirection": "column"}, children=[
         # Tabs for switching between heatmap and scatter plot
         dcc.Tabs(
             id="map-tabs",
@@ -211,7 +211,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
     ]),
     
     # Bar chart for distributions
-    html.Div(style={'width': '35%', 'padding': '10px', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "-5px 5px 5px rgba(0, 0, 0, 0.3)", "display": "flex", "flexDirection": "column"}, children=[
+    html.Div(style={'width': '40%', 'padding': '10px', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "-5px 5px 5px rgba(0, 0, 0, 0.3)", "display": "flex", "flexDirection": "column"}, children=[
         dcc.Dropdown(
             id='var-select',
             options=[
@@ -369,29 +369,28 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
     bar1_x, bar1_y = (selected_var, 'Count') if not switch_bar1 else ('Count', selected_var)
     activity_counts = filtered_df[selected_var].value_counts().reset_index()
     activity_counts.columns = [selected_var, 'Count']
+    activity_counts['Shortened'] = activity_counts[selected_var].astype(str).str[:10]  # Use first 10 characters
+    bar1_x, bar1_y = ('Shortened', 'Count') if not switch_bar1 else ('Count', 'Shortened')
     bar_fig = px.bar(
         activity_counts,
         x=bar1_x,
         y=bar1_y,
-        # title=categories[selected_var],
-        # nbins=20,
-        labels={selected_var: categories[selected_var], "Count": "Count"},
+        labels={'Shortened': categories[selected_var], "Count": "Count"},
     )
     bar_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
     # Create the second bar chart figure
     switch_bar2 = n_clicks_bar2 % 2 == 1
     bar2_x, bar2_y = (selected_var2, 'Count') if not switch_bar2 else ('Count', selected_var2)
-
     activity_counts2 = filtered_df[selected_var2].value_counts().reset_index()
     activity_counts2.columns = [selected_var2, 'Count']
+    activity_counts2['Shortened'] = activity_counts2[selected_var2].astype(str).str[:10]  # Use first 10 characters
+    bar2_x, bar2_y = ('Shortened', 'Count') if not switch_bar2 else ('Count', 'Shortened')
     bar_fig2 = px.bar(
         activity_counts2,
         x=bar2_x,
         y=bar2_y,
-        # title=categories[selected_var2],
-        # nbins=20,
-        labels={selected_var2: categories[selected_var2], "Count": "Count"},
+        labels={'Shortened': categories[selected_var2], "Count": "Count"},
     )
     bar_fig2.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
@@ -409,6 +408,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         y=filtered_df[selected_var2],
         # legend={selected_var: categories[selected_var2], selected_var2: categories[selected_var2]},
     ))
+    heat_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
     # create the timeline histogram
     timeline_fig = px.histogram(
