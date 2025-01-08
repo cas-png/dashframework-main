@@ -218,7 +218,8 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 {"label": categories[category], "value": category} for category in categories
             ],
             placeholder="Select a variable",
-            value="Victim.injury"
+            value="Victim.injury",
+            clearable=False
         ),
         dcc.Dropdown(
             id='var-select2',
@@ -226,7 +227,8 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
                 {"label": categories[category], "value": category} for category in categories
             ],
             placeholder="Select a variable",
-            value="Provoked/unprovoked"
+            value="Provoked/unprovoked",
+            clearable=False
         ),
         html.Div(style={"display": "flex", "flexDirection": "row", "flex": "1", "width": "100%", "height": "50%"}, children=[
             dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%", "height": "100%", "border": "2px solid red"}),
