@@ -192,7 +192,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         ),
         html.Div(style={"display": "flex", "flexDirection": "column", "height": "100%"}, children=[
             html.Div(style={"display": "flex", "height": "65%", "width": "100%"}, children=[dcc.Graph(id='shark-map', style={"width": "100%", "height": "100%", "border": "2px solid black"})]),
-            html.Div(style={"display": "flex", "height": "25%", "justifyContent": "center", "width": "100%"}, children=[dcc.Graph(id='timeline', style={"width": "100%", "height": "100%", "border": "2px solid red"})]),
+            html.Div(style={"display": "flex", "height": "25%", "width": "100%"}, children=[dcc.Graph(id='timeline', style={"width": "100%", "height": "100%", "border": "2px solid red"})]),
             
             # Year Range Slider below the map
             html.Label(id='slider-label'),  # Create a label for dynamic updates
@@ -349,7 +349,9 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             zoom=2.5,
             mapbox_style="open-street-map",
             labels={selected_var: categories[selected_var]},
+            color_discrete_sequence = px.colors.qualitative.Light24 # changes colourmap
         )
+        map_fig.update_traces(marker=dict(size=8)) # changes dot size
 
     map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
 
