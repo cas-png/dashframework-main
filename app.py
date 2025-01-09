@@ -327,19 +327,19 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         (filtered_df['Incident.year'] <= year_range[1])
     ]
 
-    # After applying the filters, reset the index of filtered_df
-    filtered_df = filtered_df.reset_index(drop=True)
+    # # After applying the filters, reset the index of filtered_df
+    # filtered_df = filtered_df.reset_index(drop=True)
 
-    # Highlight data based on map selection
-    if selectedData:
-        selected_points = selectedData['points']
-        selected_indices = [point['pointIndex'] for point in selected_points]
-
-        # Ensure that selected_indices are valid in the filtered DataFrame
-        selected_df = filtered_df.iloc[selected_indices] if all(
-            index < len(filtered_df) for index in selected_indices) else pd.DataFrame(columns=filtered_df.columns)
-    else:
-        selected_df = pd.DataFrame(columns=filtered_df.columns)  # Empty DataFrame for no selection
+    # # Highlight data based on map selection
+    # if selectedData:
+    #     selected_points = selectedData['points']
+    #     selected_indices = [point['pointIndex'] for point in selected_points]
+    #
+    #     # Ensure that selected_indices are valid in the filtered DataFrame
+    #     selected_df = filtered_df.iloc[selected_indices] if all(
+    #         index < len(filtered_df) for index in selected_indices) else pd.DataFrame(columns=filtered_df.columns)
+    # else:
+    #     selected_df = pd.DataFrame(columns=filtered_df.columns)  # Empty DataFrame for no selection
 
     # Calculate the percentage of rows that were kept after filtering
     row_percentage =  np.round(len(filtered_df)/len(df)*100,2)
@@ -377,135 +377,166 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         map_fig.update_traces(marker=dict(size=8))  # changes dot size
         map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
 
-        # Create the map figure (scatter or heatmap)
-        # Handle axis switching for the first bar chart
-        switch_bar1 = n_clicks_bar1 % 2 == 1
-        if not switch_bar1:
-            bar1_x, bar1_y = selected_var, 'Count'
-        else:
-            bar1_x, bar1_y = 'Count', selected_var
+    #     # Create the map figure (scatter or heatmap)
+    #     # Handle axis switching for the first bar chart
+    #     switch_bar1 = n_clicks_bar1 % 2 == 1
+    #     if not switch_bar1:
+    #         bar1_x, bar1_y = selected_var, 'Count'
+    #     else:
+    #         bar1_x, bar1_y = 'Count', selected_var
+    #
+    #     activity_counts = filtered_df[selected_var].value_counts().reset_index()
+    #     activity_counts.columns = [selected_var, 'Count']
+    #
+    #     selected_counts = selected_df[selected_var].value_counts().reset_index()
+    #     selected_counts.columns = [selected_var, 'Count']
+    #     selected_counts = selected_counts.set_index(selected_var)
+    #
+    #     activity_counts[selected_var] = activity_counts[selected_var].apply(lambda x: x[:12])
+    #     selected_counts.index = selected_counts.index.map(lambda x: x[:12])
+    #
+    #     # Merge full data and selected data
+    #     activity_counts['Selected'] = activity_counts[selected_var].map(selected_counts['Count']).fillna(0)
+    #
+    #     # Create bar chart with switching axes
+    #     bar_fig = go.Figure()
+    #     if bar1_x == selected_var:  # Normal case (selected_var on x-axis)
+    #         bar_fig.add_trace(go.Bar(
+    #             x=activity_counts[selected_var],
+    #             y=activity_counts['Count'],
+    #             name="All",
+    #             marker=dict(color='cyan'),
+    #         ))
+    #         bar_fig.add_trace(go.Bar(
+    #             x=activity_counts[selected_var],
+    #             y=activity_counts['Selected'],
+    #             name="Selected",
+    #             marker=dict(color='blue'),
+    #         ))
+    #     else:  # Switched case (selected_var on y-axis)
+    #         bar_fig.add_trace(go.Bar(
+    #             x=activity_counts['Count'],
+    #             y=activity_counts[selected_var],
+    #             name="All",
+    #             orientation='h',
+    #             marker=dict(color='cyan'),
+    #         ))
+    #         bar_fig.add_trace(go.Bar(
+    #             x=activity_counts['Selected'],
+    #             y=activity_counts[selected_var],
+    #             name="Selected",
+    #             orientation='h',
+    #             marker=dict(color='blue'),
+    #         ))
+    #
+    #     bar_fig.update_layout(
+    #         barmode='overlay',
+    #         margin=dict(l=5, r=5, t=40, b=5),
+    #         legend=dict(
+    #             x=0.6,  # Horizontal position (0 = left, 1 = right)
+    #             y=0.95,  # Vertical position (0 = bottom, 1 = top)
+    #             bgcolor='rgba(255,255,255,0.5)',  # Transparent background
+    #             bordercolor='gray',
+    #             borderwidth=1,
+    #         )
+    #     )
+    #
+    # # Create the map figure (scatter or heatmap)
+    # # (Mapping logic remains the same as before)
+    #
+    # # Handle axis switching for the first bar chart
+    # switch_bar2 = n_clicks_bar2 % 2 == 1
+    # if not switch_bar2:
+    #     bar2_x, bar2_y = selected_var2, 'Count'
+    # else:
+    #     bar2_x, bar2_y = 'Count', selected_var2
+    #
+    # activity_counts = filtered_df[selected_var2].value_counts().reset_index()
+    # activity_counts.columns = [selected_var2, 'Count']
+    #
+    # selected_counts = selected_df[selected_var2].value_counts().reset_index()
+    # selected_counts.columns = [selected_var2, 'Count']
+    # selected_counts = selected_counts.set_index(selected_var2)
+    #
+    # activity_counts[selected_var2] = activity_counts[selected_var2].apply(lambda x: x[:12])
+    # selected_counts.index = selected_counts.index.map(lambda x: x[:12])
+    #
+    # # Merge full data and selected data
+    # activity_counts['Selected'] = activity_counts[selected_var2].map(selected_counts['Count']).fillna(0)
+    #
+    # # Create bar chart with switching axes
+    # bar_fig2 = go.Figure()
+    # if bar2_x == selected_var2:  # Normal case (selected_var on x-axis)
+    #     bar_fig2.add_trace(go.Bar(
+    #         x=activity_counts[selected_var2],
+    #         y=activity_counts['Count'],
+    #         name="All",
+    #         marker=dict(color='cyan'),
+    #     ))
+    #     bar_fig2.add_trace(go.Bar(
+    #         x=activity_counts[selected_var2],
+    #         y=activity_counts['Selected'],
+    #         name="Selected",
+    #         marker=dict(color='blue'),
+    #     ))
+    # else:  # Switched case (selected_var on y-axis)
+    #     bar_fig2.add_trace(go.Bar(
+    #         x=activity_counts['Count'],
+    #         y=activity_counts[selected_var2],
+    #         name="All",
+    #         orientation='h',
+    #         marker=dict(color='cyan'),
+    #     ))
+    #     bar_fig2.add_trace(go.Bar(
+    #         x=activity_counts['Selected'],
+    #         y=activity_counts[selected_var2],
+    #         name="Selected",
+    #         orientation='h',
+    #         marker=dict(color='blue'),
+    #     ))
+    #
+    # bar_fig2.update_layout(
+    #     barmode='overlay',
+    #     margin=dict(l=5, r=5, t=40, b=5),
+    #     legend=dict(
+    #         x=0.6,  # Horizontal position (0 = left, 1 = right)
+    #         y=0.95,  # Vertical position (0 = bottom, 1 = top)
+    #         bgcolor='rgba(255,255,255,0.5)',  # Transparent background
+    #         bordercolor='gray',
+    #         borderwidth=1,
+    #     )
+    # )
 
-        activity_counts = filtered_df[selected_var].value_counts().reset_index()
-        activity_counts.columns = [selected_var, 'Count']
-
-        selected_counts = selected_df[selected_var].value_counts().reset_index()
-        selected_counts.columns = [selected_var, 'Count']
-        selected_counts = selected_counts.set_index(selected_var)
-
-        activity_counts[selected_var] = activity_counts[selected_var].apply(lambda x: x[:12])
-        selected_counts.index = selected_counts.index.map(lambda x: x[:12])
-
-        # Merge full data and selected data
-        activity_counts['Selected'] = activity_counts[selected_var].map(selected_counts['Count']).fillna(0)
-
-        # Create bar chart with switching axes
-        bar_fig = go.Figure()
-        if bar1_x == selected_var:  # Normal case (selected_var on x-axis)
-            bar_fig.add_trace(go.Bar(
-                x=activity_counts[selected_var],
-                y=activity_counts['Count'],
-                name="All",
-                marker=dict(color='cyan'),
-            ))
-            bar_fig.add_trace(go.Bar(
-                x=activity_counts[selected_var],
-                y=activity_counts['Selected'],
-                name="Selected",
-                marker=dict(color='blue'),
-            ))
-        else:  # Switched case (selected_var on y-axis)
-            bar_fig.add_trace(go.Bar(
-                x=activity_counts['Count'],
-                y=activity_counts[selected_var],
-                name="All",
-                orientation='h',
-                marker=dict(color='cyan'),
-            ))
-            bar_fig.add_trace(go.Bar(
-                x=activity_counts['Selected'],
-                y=activity_counts[selected_var],
-                name="Selected",
-                orientation='h',
-                marker=dict(color='blue'),
-            ))
-
-        bar_fig.update_layout(
-            barmode='overlay',
-            margin=dict(l=5, r=5, t=40, b=5),
-            legend=dict(
-                x=0.6,  # Horizontal position (0 = left, 1 = right)
-                y=0.95,  # Vertical position (0 = bottom, 1 = top)
-                bgcolor='rgba(255,255,255,0.5)',  # Transparent background
-                bordercolor='gray',
-                borderwidth=1,
-            )
-        )
-
-    # Create the map figure (scatter or heatmap)
-    # (Mapping logic remains the same as before)
-
-    # Handle axis switching for the first bar chart
-    switch_bar2 = n_clicks_bar2 % 2 == 1
-    if not switch_bar2:
-        bar2_x, bar2_y = selected_var2, 'Count'
-    else:
-        bar2_x, bar2_y = 'Count', selected_var2
-
-    activity_counts = filtered_df[selected_var2].value_counts().reset_index()
-    activity_counts.columns = [selected_var2, 'Count']
-
-    selected_counts = selected_df[selected_var2].value_counts().reset_index()
-    selected_counts.columns = [selected_var2, 'Count']
-    selected_counts = selected_counts.set_index(selected_var2)
-
-    activity_counts[selected_var2] = activity_counts[selected_var2].apply(lambda x: x[:12])
-    selected_counts.index = selected_counts.index.map(lambda x: x[:12])
-
-    # Merge full data and selected data
-    activity_counts['Selected'] = activity_counts[selected_var2].map(selected_counts['Count']).fillna(0)
-
-    # Create bar chart with switching axes
-    bar_fig2 = go.Figure()
-    if bar2_x == selected_var2:  # Normal case (selected_var on x-axis)
-        bar_fig2.add_trace(go.Bar(
-            x=activity_counts[selected_var2],
-            y=activity_counts['Count'],
-            name="All",
-            marker=dict(color='cyan'),
-        ))
-        bar_fig2.add_trace(go.Bar(
-            x=activity_counts[selected_var2],
-            y=activity_counts['Selected'],
-            name="Selected",
-            marker=dict(color='blue'),
-        ))
-    else:  # Switched case (selected_var on y-axis)
-        bar_fig2.add_trace(go.Bar(
-            x=activity_counts['Count'],
-            y=activity_counts[selected_var2],
-            name="All",
-            orientation='h',
-            marker=dict(color='cyan'),
-        ))
-        bar_fig2.add_trace(go.Bar(
-            x=activity_counts['Selected'],
-            y=activity_counts[selected_var2],
-            name="Selected",
-            orientation='h',
-            marker=dict(color='blue'),
-        ))
-
-    bar_fig2.update_layout(
-        barmode='overlay',
-        margin=dict(l=5, r=5, t=40, b=5),
-        legend=dict(
-            x=0.6,  # Horizontal position (0 = left, 1 = right)
-            y=0.95,  # Vertical position (0 = bottom, 1 = top)
-            bgcolor='rgba(255,255,255,0.5)',  # Transparent background
-            bordercolor='gray',
-            borderwidth=1,
-        )
+    # Create the bar chart figure
+    switch_bar1 = n_clicks_bar1 % 2 == 1
+    bar1_x, bar1_y = (selected_var, 'Count') if not switch_bar1 else ('Count', selected_var)
+    activity_counts = filtered_df[selected_var].value_counts().reset_index()
+    activity_counts.columns = [selected_var, 'Count']
+    activity_counts['Shortened'] = activity_counts[selected_var].astype(str).str[:10]  # Use first 10 characters
+    bar1_x, bar1_y = ('Shortened', 'Count') if not switch_bar1 else ('Count', 'Shortened')
+    bar_fig = px.bar(
+        activity_counts,
+        x=bar1_x,
+        y=bar1_y,
+        labels={'Shortened': categories[selected_var], "Count": "Count"},
     )
+    bar_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
+
+    # Create the second bar chart figure
+    switch_bar2 = n_clicks_bar2 % 2 == 1
+    bar2_x, bar2_y = (selected_var2, 'Count') if not switch_bar2 else ('Count', selected_var2)
+    activity_counts2 = filtered_df[selected_var2].value_counts().reset_index()
+    activity_counts2.columns = [selected_var2, 'Count']
+    activity_counts2['Shortened'] = activity_counts2[selected_var2].astype(str).str[:10]  # Use first 10 characters
+    bar2_x, bar2_y = ('Shortened', 'Count') if not switch_bar2 else ('Count', 'Shortened')
+    bar_fig2 = px.bar(
+        activity_counts2,
+        x=bar2_x,
+        y=bar2_y,
+        labels={'Shortened': categories[selected_var2], "Count": "Count"},
+    )
+    bar_fig2.update_layout(margin=dict(l=5, r=5, t=40, b=5))
+
 
     # # Create the heatmap figure
     # heat_fig = px.density_heatmap(
@@ -540,6 +571,13 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
 @app.callback(
     [
         Output('shark-dropdown', 'value'),
+        Output('injury-dropdown', 'value'),
+        Output('injury-severity-dropdown', 'value'),
+        Output('state-dropdown', 'value'),
+        Output('site-dropdown', 'value'),
+        Output('gender-dropdown', 'value'),
+        Output('source-dropdown', 'value'),
+        Output('victim-activity-dropdown', 'value'),
         Output('shark-length-slider', 'value'),
         Output('provoked-status', 'value'),
         Output('include-unknown-length', 'value'),
@@ -551,9 +589,16 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
 def reset_filters(n_clicks):
     # Reset all filter components to their defaults
     return (
-        None, 
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
         [shark_length_min, shark_length_max], 
-        "all", 
+        None,
         ["include"],
         [year_min, year_max]
     )
