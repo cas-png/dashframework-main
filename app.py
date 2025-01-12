@@ -181,13 +181,15 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         dcc.Dropdown(
             id="color-dropdown",
             options=colorscales,
-            value="viridis"
+            value="viridis",
+            clearable=False
         ),
         html.Label("Select Discrete Color Palette:"),
         dcc.Dropdown(
             id="color-dropdown-discrete",
             options=list(colorsequences.keys()),
-            value="Vivid"
+            value="Vivid",
+            clearable=False
         ),
         html.Br(),
         # Modal for extra info
@@ -355,8 +357,6 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
     # Filter by provoked status
     if provoked_status:
         filtered_df = filtered_df[filtered_df['Provoked/unprovoked'].isin(provoked_status)]
-    # if provoked_status != "all":
-    #     filtered_df = filtered_df[filtered_df['Provoked/unprovoked'] == provoked_status]
 
     # Filter by year range
     filtered_df = filtered_df[
@@ -410,6 +410,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             zoom=2.5,
             mapbox_style='open-street-map',
             labels={selected_var: categories[selected_var]},
+            # opacity=0.5,
             color_discrete_sequence = colorsequences[color_sequence] # changes colourmap
         )
         map_fig.update_traces(marker=dict(size=8))  # changes dot size
@@ -590,6 +591,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         y=filtered_df[selected_var2],
         # legend={selected_var: categories[selected_var2], selected_var2: categories[selected_var2]},
         colorscale = color_palette, # changes colourmap
+        texttemplate= "%{z}",
     ))
     heat_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
