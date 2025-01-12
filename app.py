@@ -50,10 +50,30 @@ category_info = {"Incident Date": "Based on Incident.year and Incident.month",
                  "Source Type": "Data.source",
                  "Shark Length": "Shark.length.m"} #TODO double check if this is correct and complete
 
+colorscales = px.colors.named_colorscales()
+colorsequences = {
+    'Alphabet': px.colors.qualitative.Alphabet,
+    'Antique': px.colors.qualitative.Antique,
+    'Bold': px.colors.qualitative.Bold,
+    'Dark24': px.colors.qualitative.Dark24,
+    'Dark2': px.colors.qualitative.Dark2,
+    'Light24': px.colors.qualitative.Light24,
+    'Pastel': px.colors.qualitative.Pastel,
+    'Pastel1': px.colors.qualitative.Pastel1,
+    'Pastel2': px.colors.qualitative.Pastel2,
+    'Safe': px.colors.qualitative.Safe,
+    'Set1': px.colors.qualitative.Set1,
+    'Set2': px.colors.qualitative.Set2,
+    'Set3': px.colors.qualitative.Set3,
+    'Vivid': px.colors.qualitative.Vivid
+}
+
+
+
 # Create the layout
 app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "padding": 0, "display": "flex"}, children=[ # Full-screen container
     # Sidebar with dropdown and filters --- TODO: Add more filters and finish the modal for extra info (link to data source, and descriptions of each variable shown, make sure all variables used in the tool are included)
-    html.Div(style={'width': '15%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)", "fontSize": "12px"}, children=[
+    html.Div(style={'width': '15%', 'padding': '10px', 'float': 'left', "border": "1px solid rgba(0, 0, 0, 1)", "border-radius": "10px", "boxShadow": "5px 5px 5px rgba(0, 0, 0, 0.3)", "fontSize": "12px", "overflow-y": "scroll"}, children=[
         # html.H1("Shark Attack Data"),
         # Dropdown for selecting shark type
         html.Label("Shark Type:"),
@@ -128,7 +148,7 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             multi=True,
             placeholder="Select provoked status",
         ),
-        # html.Br(),
+        html.Br(),
         # Range slider for shark length
         html.Label("Shark Length (meters):"),
         dcc.RangeSlider(
@@ -140,14 +160,14 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             value=[shark_length_min, shark_length_max],
             tooltip={"placement": "bottom", "always_visible": True},
         ),
-        # html.Br(),
+        html.Br(),
         # Checkbox for including unknown lengths
         dcc.Checklist(
             id='include-unknown-length',
             options=[{"label": " Include unknown lengths", "value": "include"}],
             value=["include"]
         ),
-        # html.Br(),
+        html.Br(),
         # Reset filters button
         html.Button(
             "Reset Filters",
@@ -155,6 +175,21 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         ),
         html.Br(),
         html.Div(id='row-details'),
+
+        html.Br(),
+        html.Label("Select Continuous Color Palette:"),
+        dcc.Dropdown(
+            id="color-dropdown",
+            options=colorscales,
+            value="viridis"
+        ),
+        html.Label("Select Discrete Color Palette:"),
+        dcc.Dropdown(
+            id="color-dropdown-discrete",
+            options=list(colorsequences.keys()),
+            value="Vivid"
+        ),
+        html.Br(),
         # Modal for extra info
         dbc.Button("Info", id="open-dismiss"),
         dbc.Modal(
@@ -272,10 +307,12 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
         Input('var-select2', 'value'),
         Input('switch-axes-bar1', 'n_clicks'),
         Input('switch-axes-bar2', 'n_clicks'),
-        Input('shark-map', 'selectedData')
+        Input('shark-map', 'selectedData'),
+        Input("color-dropdown", "value"),
+        Input("color-dropdown-discrete", "value"),
     ]
 )
-def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_severities, selected_activities, selected_sources, selected_genders, selected_sites, selected_states, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var, selected_var2, n_clicks_bar1, n_clicks_bar2, selectedData):
+def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_severities, selected_activities, selected_sources, selected_genders, selected_sites, selected_states, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var, selected_var2, n_clicks_bar1, n_clicks_bar2, selectedData, color_palette, color_sequence):
 
     filtered_df = df
 
@@ -358,7 +395,8 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             radius=5,
             center=dict(lat=-28, lon=130), #center=dict(lat=-23, lon=132),  # Center of Australia
             zoom=2.5,
-            mapbox_style="open-street-map"
+            mapbox_style="open-street-map",
+            color_continuous_scale=color_palette, # changes colourmap
         )
     else:  # selected_tab == "scatter"
         # Create scatter plot map
@@ -372,7 +410,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             zoom=2.5,
             mapbox_style='open-street-map',
             labels={selected_var: categories[selected_var]},
-            color_discrete_sequence = px.colors.qualitative.Light24 # changes colourmap
+            color_discrete_sequence = colorsequences[color_sequence] # changes colourmap
         )
         map_fig.update_traces(marker=dict(size=8))  # changes dot size
         map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
@@ -551,6 +589,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         x=filtered_df[selected_var],
         y=filtered_df[selected_var2],
         # legend={selected_var: categories[selected_var2], selected_var2: categories[selected_var2]},
+        colorscale = color_palette, # changes colourmap
     ))
     heat_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
