@@ -364,12 +364,24 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         (filtered_df['Incident.year'] <= year_range[1])
     ]
 
-    # Calculate the percentage of rows that were kept after filtering
-    row_percentage =  np.round(len(filtered_df)/len(df)*100,2)
-    row_number = len(filtered_df)
-    row_details = f"After filtering, {row_number} rows are kept ({row_percentage}% of total rows)."
-    if row_number == 1:
-        row_details = f"After filtering, {row_number} row is kept ({row_percentage}% of total rows)."
+    # Create selected_df based on selectedData
+    if selectedData and selectedData['points']:
+        selected_coords = [(point['lat'], point['lon']) for point in selectedData['points']]
+        selected_latitudes, selected_longitudes = zip(*selected_coords)
+        selected_df = filtered_df[
+            filtered_df['Latitude'].isin(selected_latitudes) &
+            filtered_df['Longitude'].isin(selected_longitudes)
+            ]
+    else:
+        selected_df = pd.DataFrame(columns=filtered_df.columns)  # Empty DataFrame if nothing is selected
+
+    # Calculate row details
+    filtered_row_percentage = np.round(len(filtered_df) / len(df) * 100, 2)
+    selected_row_percentage = np.round(len(selected_df) / len(df) * 100, 2)
+    row_details = (
+        f"Filtered Data: {len(filtered_df)} rows ({filtered_row_percentage}% of total rows). "
+        f"Selected Data: {len(selected_df)} rows ({selected_row_percentage}% of total rows)."
+    )
     
     # Create the map figure
     if selected_tab == "heatmap":
@@ -403,35 +415,75 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         map_fig.update_traces(marker=dict(size=8))  # changes dot size
         map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
 
-    # Create the bar chart figure
+
+    combined_df = (
+        pd.concat([
+            filtered_df[[selected_var]].assign(Source='Filtered Data'),
+            selected_df[[selected_var]].assign(Source='Selected Data')
+        ])
+        .groupby([selected_var, 'Source'])
+        .size()
+        .reset_index(name='Count')
+    )
     switch_bar1 = n_clicks_bar1 % 2 == 1
     bar1_x, bar1_y = (selected_var, 'Count') if not switch_bar1 else ('Count', selected_var)
-    activity_counts = filtered_df[selected_var].value_counts().reset_index()
-    activity_counts.columns = [selected_var, 'Count']
-    activity_counts['Modified'] = activity_counts[selected_var].astype(str).str.replace('shark', '', regex=False) # Remove 'shark' from any string
-    bar1_x, bar1_y = ('Modified', 'Count') if not switch_bar1 else ('Count', 'Modified')
     bar_fig = px.bar(
-        activity_counts,
+        combined_df,
         x=bar1_x,
         y=bar1_y,
-        labels={'Modified': categories[selected_var].replace('shark', ''), "Count": "Count"},
+        color='Source',
+        barmode='group',
+        labels={selected_var: categories[selected_var], "Count": "Count", "Source": "Data Source"},
     )
     bar_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
-    # Create the second bar chart figure
+    # Generate the second bar chart for filtered_df and selected_df
+    combined_df2 = (
+        pd.concat([
+            filtered_df[[selected_var2]].assign(Source='Filtered Data'),
+            selected_df[[selected_var2]].assign(Source='Selected Data')
+        ])
+        .groupby([selected_var2, 'Source'])
+        .size()
+        .reset_index(name='Count')
+    )
     switch_bar2 = n_clicks_bar2 % 2 == 1
     bar2_x, bar2_y = (selected_var2, 'Count') if not switch_bar2 else ('Count', selected_var2)
-    activity_counts2 = filtered_df[selected_var2].value_counts().reset_index()
-    activity_counts2.columns = [selected_var2, 'Count']
-    activity_counts2['Modified'] = activity_counts2[selected_var2].astype(str).str.replace('shark', '', regex=False)  # Remove 'shark' from any string
-    bar2_x, bar2_y = ('Modified', 'Count') if not switch_bar2 else ('Count', 'Modified')
     bar_fig2 = px.bar(
-        activity_counts2,
+        combined_df2,
         x=bar2_x,
         y=bar2_y,
-        labels={'Modified': categories[selected_var2].replace('shark', ''), "Count": "Count"},
+        color='Source',
+        barmode='group',
+        labels={selected_var2: categories[selected_var2], "Count": "Count", "Source": "Data Source"},
     )
     bar_fig2.update_layout(margin=dict(l=5, r=5, t=40, b=5))
+
+    bar_fig.update_layout(
+        margin=dict(l=5, r=5, t=40, b=5),  # Adjust margins as needed
+        legend=dict(
+            orientation="h",  # Horizontal legend
+            yanchor="top",
+            y=1,  # Inside the chart at the top
+            xanchor="center",
+            x=0.5,  # Centered horizontally
+            font=dict(size=10),  # Smaller font size
+            bgcolor="rgba(255, 255, 255, 0.3)",  # Semi-transparent background for better readability
+        )
+    )
+
+    bar_fig2.update_layout(
+        margin=dict(l=5, r=5, t=40, b=5),  # Adjust margins as needed
+        legend=dict(
+            orientation="h",  # Horizontal legend
+            yanchor="top",
+            y=1,  # Inside the chart at the top
+            xanchor="center",
+            x=0.5,  # Centered horizontally
+            font=dict(size=10),  # Smaller font size
+            bgcolor="rgba(255, 255, 255, 0.3)",  # Semi-transparent background for better readability
+        )
+    )
 
     # Create correlation heatmap
     filtered_df['Modified_var'] = filtered_df[selected_var].astype(str).str.replace('shark', '', regex=False)
