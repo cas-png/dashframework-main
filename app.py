@@ -622,7 +622,9 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         Output('shark-length-slider', 'value'),
         Output('provoked-status', 'value'),
         Output('include-unknown-length', 'value'),
-        Output('year-slider', 'value')
+        Output('year-slider', 'value'),
+        Output('color-dropdown', 'value'),
+        Output('color-dropdown-discrete', 'value')
     ],
     Input('reset-filters-button', 'n_clicks'),
     prevent_initial_call=True
@@ -641,7 +643,9 @@ def reset_filters(n_clicks):
         [shark_length_min, shark_length_max], 
         None,
         ["include"],
-        [year_min, year_max]
+        [year_min, year_max],
+        'viridis',
+        'Vivid'
     )
 
 @app.callback(
