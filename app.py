@@ -272,11 +272,11 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             html.Button("Switch Axes for Bar Chart 2", id='switch-axes-bar2', n_clicks=0),
             ], style={'display': 'flex', 'justify-content': 'space-between', 'margin': '10px 0'}
         ),
-        html.Div(style={"display": "flex", "flexDirection": "row", "flex": "1", "width": "100%", "height": "50%"}, children=[
+        html.Div(style={"display": "flex", "flexDirection": "row", "flex": "1", "width": "100%", "height": "40%"}, children=[
             dcc.Graph(id='activity-bar-chart', style={"flex": "1", "width": "100%", "height": "100%"}),
             dcc.Graph(id='activity-bar-chart2', style={"flex": "1", "width": "100%", "height": "100%"}),
         ]),
-        html.Div(style={"display": "flex", "flexDirection": "column", "width": "100%", "height": "35%"}, children=[
+        html.Div(style={"display": "flex", "flexDirection": "column", "width": "100%", "height": "40%"}, children=[
         dcc.Graph(id='heat-chart', style={"flex": "1", "width": "100%", "height": "100%"})])
     ]),
 ])
@@ -403,19 +403,18 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         map_fig.update_traces(marker=dict(size=8))  # changes dot size
         map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
 
-
     # Create the bar chart figure
     switch_bar1 = n_clicks_bar1 % 2 == 1
     bar1_x, bar1_y = (selected_var, 'Count') if not switch_bar1 else ('Count', selected_var)
     activity_counts = filtered_df[selected_var].value_counts().reset_index()
     activity_counts.columns = [selected_var, 'Count']
-    activity_counts['Shortened'] = activity_counts[selected_var].astype(str).str[:10]  # Use first 10 characters
-    bar1_x, bar1_y = ('Shortened', 'Count') if not switch_bar1 else ('Count', 'Shortened')
+    activity_counts['Modified'] = activity_counts[selected_var].astype(str).str.replace('shark', '', regex=False) # Remove 'shark' from any string
+    bar1_x, bar1_y = ('Modified', 'Count') if not switch_bar1 else ('Count', 'Modified')
     bar_fig = px.bar(
         activity_counts,
         x=bar1_x,
         y=bar1_y,
-        labels={'Shortened': categories[selected_var], "Count": "Count"},
+        labels={'Modified': categories[selected_var].replace('shark', ''), "Count": "Count"},
     )
     bar_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
@@ -424,23 +423,26 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
     bar2_x, bar2_y = (selected_var2, 'Count') if not switch_bar2 else ('Count', selected_var2)
     activity_counts2 = filtered_df[selected_var2].value_counts().reset_index()
     activity_counts2.columns = [selected_var2, 'Count']
-    activity_counts2['Shortened'] = activity_counts2[selected_var2].astype(str).str[:10]  # Use first 10 characters
-    bar2_x, bar2_y = ('Shortened', 'Count') if not switch_bar2 else ('Count', 'Shortened')
+    activity_counts2['Modified'] = activity_counts2[selected_var2].astype(str).str.replace('shark', '', regex=False)  # Remove 'shark' from any string
+    bar2_x, bar2_y = ('Modified', 'Count') if not switch_bar2 else ('Count', 'Modified')
     bar_fig2 = px.bar(
         activity_counts2,
         x=bar2_x,
         y=bar2_y,
-        labels={'Shortened': categories[selected_var2], "Count": "Count"},
+        labels={'Modified': categories[selected_var2].replace('shark', ''), "Count": "Count"},
     )
     bar_fig2.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
-    # create correlation heatmap
+    # Create correlation heatmap
+    filtered_df['Modified_var'] = filtered_df[selected_var].astype(str).str.replace('shark', '', regex=False)
+    filtered_df['Modified_var2'] = filtered_df[selected_var2].astype(str).str.replace('shark', '', regex=False)
+
     heat_fig = go.Figure(go.Histogram2d(
-        x=filtered_df[selected_var],
-        y=filtered_df[selected_var2],
+        x=filtered_df['Modified_var'],
+        y=filtered_df['Modified_var2'],
         # legend={selected_var: categories[selected_var2], selected_var2: categories[selected_var2]},
-        colorscale = color_palette, # changes colourmap
-        texttemplate= "%{z}",
+        colorscale=color_palette,  # changes colourmap
+        texttemplate="%{z}",
     ))
     heat_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
 
