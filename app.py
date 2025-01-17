@@ -173,6 +173,10 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             "Reset Filters",
             id='reset-filters-button',
         ),
+        html.Button(
+            "Reset Selection",
+            id='reset-selection-button',
+        ),
         html.Br(),
         html.Div(id='row-details'),
 
@@ -557,6 +561,14 @@ def reset_filters(n_clicks):
         'viridis',
         'Vivid'
     )
+
+@app.callback(
+    [Output('shark-map', 'selectedData')],
+    Input('reset-selection-button', 'n_clicks'),
+    prevent_initial_call=True
+)
+def reset_selection(n_clicks):
+    return [None]
 
 @app.callback(
     Output("modal-dismiss", "is_open"),
