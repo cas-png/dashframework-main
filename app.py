@@ -372,9 +372,15 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             filtered_df['Latitude'].isin(selected_latitudes) &
             filtered_df['Longitude'].isin(selected_longitudes)
             ]
+        filtered_df = filtered_df.assign(IsSelected=filtered_df['index1'].isin(selected_df['index1']).astype(int))
+        filtered_df['IsSelected'] = filtered_df['IsSelected'].astype('float')
+        filtered_df['IsSelected'] = filtered_df['IsSelected'].apply(lambda x: 1 if x == 1 else 0.3)
     else:
         selected_df = pd.DataFrame(columns=filtered_df.columns)  # Empty DataFrame if nothing is selected
-
+        filtered_df['IsSelected'] = 1
+    
+    filtered_df['IsSelected'] = filtered_df['IsSelected'].astype('float')
+    
     # Calculate row details
     filtered_row_percentage = np.round(len(filtered_df) / len(df) * 100, 2)
     selected_row_percentage = np.round(len(selected_df) / len(df) * 100, 2)
@@ -405,11 +411,12 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             lon='Longitude',
             color=selected_var,  # Color by incident type
             hover_name='Shark.common.name',  # Display shark name on hover
+            # hover_name='IsSelected',
+            # opacity='IsSelected', # comment out to fix
             center=dict(lat=-28, lon=130),
             zoom=2.5,
             mapbox_style='open-street-map',
             labels={selected_var: categories[selected_var]},
-            # opacity=0.5,
             color_discrete_sequence = colorsequences[color_sequence] # changes colourmap
         )
         map_fig.update_traces(marker=dict(size=8))  # changes dot size

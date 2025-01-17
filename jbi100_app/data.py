@@ -4,6 +4,8 @@ import pandas as pd
 
 def get_data():
     df= pd.read_excel('./jbi100_app/dataset/data_modified_new.xlsx', index_col=0)
+    df['index1'] = df.index
+    # print(df['index1'])
     df['Shark.common.name'] = df['Shark.common.name'].fillna("unknown") # fill missing values with "unknown"
     df['Victim.injury'] = df['Victim.injury'].replace(['injured', 'injury', 'Injured'], 'injured') # standardize injury result names
     df['Victim.activity'] = df['Victim.activity'].fillna("unknown") # fill missing values with "unknown"
