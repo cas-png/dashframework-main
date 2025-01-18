@@ -85,12 +85,12 @@ app.layout = html.Div(style={"height": "98vh", "width": "98vw", "margin": 0, "pa
             style={"fontSize": "12px", "maxHeight": "100px"}
         ),
         # Dropdown for selecting injury level
-        html.Label("Victim Injury Level:"),
+        html.Label("Victim Injury Result:"),
         dcc.Dropdown(
             id='injury-dropdown',
             options=[{"label": level, "value": level} for level in df['Victim.injury'].unique()],
             multi=True,
-            placeholder="Select injury level(s)",
+            placeholder="Select injury result(s)",
         ),
         # Dropdown for selecting injury severity
         html.Label("Victim Injury Severity:"),
@@ -376,14 +376,14 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             filtered_df['Latitude'].isin(selected_latitudes) &
             filtered_df['Longitude'].isin(selected_longitudes)
             ]
-        filtered_df = filtered_df.assign(IsSelected=filtered_df['index1'].isin(selected_df['index1']).astype(int))
-        filtered_df['IsSelected'] = filtered_df['IsSelected'].astype('float')
-        filtered_df['IsSelected'] = filtered_df['IsSelected'].apply(lambda x: 1 if x == 1 else 0.3)
+        filtered_df = filtered_df.assign(IsSelected=filtered_df['index1'].isin(selected_df['index1']))
+        filtered_df = filtered_df.assign(Size=filtered_df['IsSelected'].astype(float).apply(lambda x: 1 if x == 1 else 0.3))
     else:
         selected_df = pd.DataFrame(columns=filtered_df.columns)  # Empty DataFrame if nothing is selected
-        filtered_df['IsSelected'] = 1
+        filtered_df['IsSelected'] = True
+        filtered_df['Size'] = 1.0
     
-    filtered_df['IsSelected'] = filtered_df['IsSelected'].astype('float')
+    # filtered_df['IsSelected'] = filtered_df['IsSelected'].astype(float)
     
     # Calculate row details
     filtered_row_percentage = np.round(len(filtered_df) / len(df) * 100, 2)
@@ -409,23 +409,24 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
     else:  # selected_tab == "scatter"
         # Create scatter plot map
-        map_fig = px.scatter_mapbox(
+        map_fig = px.scatter_map(
             filtered_df,
             lat='Latitude',
             lon='Longitude',
             color=selected_var,  # Color by incident type
-            hover_name='Shark.common.name',  # Display shark name on hover
-            # hover_name='IsSelected',
-            # opacity='IsSelected', # comment out to fix
+            size='Size', # comment out to fix
             center=dict(lat=-28, lon=130),
             zoom=2.5,
-            mapbox_style='open-street-map',
-            labels={selected_var: categories[selected_var]},
-            color_discrete_sequence = colorsequences[color_sequence] # changes colourmap
+            map_style='open-street-map',
+            hover_name='Shark.full.name',  # Display shark name on hover
+            hover_data={selected_var: True, selected_var2: True, 'Size': False, 'IsSelected': True, 'Latitude': True, 'Longitude': True, },
+            labels={selected_var: categories[selected_var], selected_var2: categories[selected_var2], 'IsSelected': 'Selected'},
+            color_discrete_sequence = colorsequences[color_sequence], # changes colourmap
+            size_max=8,
+            opacity=1,
         )
-        map_fig.update_traces(marker=dict(size=8))  # changes dot size
+        # map_fig.update_traces(marker=dict(size=8))  # changes dot size
         map_fig.update_layout(margin=dict(l=5, r=5, t=30, b=5))
-
 
     combined_df = (
         pd.concat([
