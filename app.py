@@ -56,7 +56,7 @@ categories = {'Incident.month': 'Incident Month',
               'Data.source': 'Source Type'}
 
 # Overview of the variables shown in the tool and the columns from the data source that are used in that variable, used for the pop-up modal
-category_info = {'Incident Date': 'Based on Incident.year and Incident.month',
+category_info = {'Incident Date': 'Based on Incident.year and Incident.month. All dates are set to the first day of the month.',
                  'Victim Injury Severity': 'Injury.severity', 
                  'Victim Injury Result': 'Victim.injury', 
                  'State': 'State', 
