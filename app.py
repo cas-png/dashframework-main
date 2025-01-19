@@ -227,7 +227,7 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
                 dbc.ModalBody(children=[ # Body of the modal: information and links to information and code from the tool and data, and a table with variable details
                     html.Div('The table below lists each variable shown in the tool and provides the columns from the data source that are used in that variable.'),
                     dash_table.DataTable([{'Variable Name': key, 'Details': value} for key, value in category_info.items()]),
-                    html.Div('Tool created by JBI100 team 30 (2024 Q2).'),
+                    html.Div('Tool created by JBI100 team 30 (2024-2025 Q2).'),
                     dbc.Button('Visualisation Tool GitHub', href='https://github.com/cas-png/dashframework-main'),
                     dbc.Button('Data Source GitHub', href='https://github.com/cjabradshaw/AustralianSharkIncidentDatabase'),
                     dbc.Button('Video Presentation', href='/'), # TODO: Add link to video presentation
