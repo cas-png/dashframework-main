@@ -66,7 +66,7 @@ category_info = {'Incident Date': 'Based on Incident.year and Incident.month',
                  'Victim Activity': 'Victim.activity',
                  'Victim Gender': 'Victim.gender',
                  'Source Type': 'Data.source',
-                 'Shark Length': 'Shark.length.m'} # TODO double check if this is correct and complete
+                 'Shark Length': 'Shark.length.m'}
 
 # Define the continuous color scales
 colorscales = px.colors.named_colorscales()
