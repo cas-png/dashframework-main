@@ -61,7 +61,7 @@ category_info = {'Incident Date': 'Based on Incident.year and Incident.month. Al
                  'Victim Injury Result': 'Victim.injury', 
                  'State': 'State', 
                  'Location Type': 'Site.category', 
-                 'Shark Type': 'Shark.common.name',
+                 'Shark Type': 'Based on Shark.common.name and Shark.scientific.name',
                  'Provoked': 'Provoked/unprovoked', 
                  'Victim Activity': 'Victim.activity',
                  'Victim Gender': 'Victim.gender',
