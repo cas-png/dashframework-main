@@ -44,27 +44,27 @@ year_min = df['Incident.year'].min()
 year_max = df['Incident.year'].max()
 
 # Define for each category a human-readable name
-categories = {'Incident.month': 'Incident Month',
-              'Injury.severity': 'Victim Injury Severity', 
-              'Victim.injury': 'Victim Injury Result', 
-              'State': 'State', 
-              'Site.category': 'Location Type', 
-              'Shark.common.name': 'Shark Type',
-              'Provoked/unprovoked': 'Provoked', 
+categories = {'Shark.common.name': 'Shark Type',
+              'Victim.injury': 'Victim Injury Result',
+              'Injury.severity': 'Victim Injury Severity',
               'Victim.activity': 'Victim Activity',
               'Victim.gender': 'Victim Gender',
+              'Provoked/unprovoked': 'Provoked', 
+              'State': 'State', 
+              'Site.category': 'Location Type', 
+              'Incident.month': 'Incident Month',
               'Data.source': 'Source Type'}
 
 # Overview of the variables shown in the tool and the columns from the data source that are used in that variable, used for the pop-up modal
-category_info = {'Incident Date': 'Based on Incident.year and Incident.month. All dates are set to the first day of the month.',
-                 'Victim Injury Severity': 'Injury.severity', 
-                 'Victim Injury Result': 'Victim.injury', 
-                 'State': 'State', 
-                 'Location Type': 'Site.category', 
-                 'Shark Type': 'Based on Shark.common.name and Shark.scientific.name',
-                 'Provoked': 'Provoked/unprovoked', 
+category_info = {'Shark Type': 'Based on Shark.common.name and Shark.scientific.name',
+                 'Victim Injury Severity': 'Injury.severity',
+                 'Victim Injury Result': 'Victim.injury',
                  'Victim Activity': 'Victim.activity',
                  'Victim Gender': 'Victim.gender',
+                 'Provoked': 'Provoked/unprovoked',
+                 'State': 'State',
+                 'Location Type': 'Site.category',
+                 'Incident Date': 'Based on Incident.year and Incident.month. All dates are set to the first day of the month.',
                  'Source Type': 'Data.source',
                  'Shark Length': 'Shark.length.m'}
 
@@ -98,7 +98,7 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
         html.Label('Shark Type:'),
         dcc.Dropdown(
             id='shark-dropdown',
-            options=[{'label': shark, 'value': shark} for shark in df['Shark.common.name'].unique()],
+            options=sorted([{'label': shark, 'value': shark} for shark in df['Shark.common.name'].unique()], key = lambda x: x['label']),
             multi=True,
             placeholder='Select shark type(s)',
             style={'fontSize': '12px', 'maxHeight': '100px'}
@@ -107,7 +107,7 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
         html.Label('Victim Injury Result:'),
         dcc.Dropdown(
             id='injury-dropdown',
-            options=[{'label': level, 'value': level} for level in df['Victim.injury'].unique()],
+            options=sorted([{'label': level, 'value': level} for level in df['Victim.injury'].unique()], key = lambda x: x['label']),
             multi=True,
             placeholder='Select injury result(s)',
         ),
@@ -115,15 +115,39 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
         html.Label('Victim Injury Severity:'),
         dcc.Dropdown(
             id='injury-severity-dropdown',
-            options=[{'label': level, 'value': level} for level in df['Injury.severity'].unique()],
+            options=sorted([{'label': level, 'value': level} for level in df['Injury.severity'].unique()], key = lambda x: x['label']),
             multi=True,
             placeholder='Select injury severity(s)',
+        ),
+        # Dropdown for selecting victim activity: Victim.activity
+        html.Label('Victim Activity:'),
+        dcc.Dropdown(
+            id='victim-activity-dropdown',
+            options=sorted([{'label': level, 'value': level} for level in df['Victim.activity'].unique()], key = lambda x: x['label']),
+            multi=True,
+            placeholder='Select activity(s)',
+        ),
+        # Dropdown for selecting victim gender: Victim.gender
+        html.Label('Victim Gender:'),
+        dcc.Dropdown(
+            id='gender-dropdown',
+            options=sorted([{'label': level, 'value': level} for level in df['Victim.gender'].unique()], key = lambda x: x['label']),
+            multi=True,
+            placeholder='Select gender(s)',
+        ),
+        # Dropdown for provoked status: Provoked/unprovoked
+        html.Label('Provoked Status:'),
+        dcc.Dropdown(
+            id='provoked-status',
+            options=sorted([{'label': level, 'value': level} for level in df['Provoked/unprovoked'].unique()], key = lambda x: x['label']),
+            multi=True,
+            placeholder='Select provoked status',
         ),
         # Dropdown for selecting state: State
         html.Label('State:'),
         dcc.Dropdown(
             id='state-dropdown',
-            options=[{'label': level, 'value': level} for level in df['State'].unique()],
+            options=sorted([{'label': level, 'value': level} for level in df['State'].unique()], key = lambda x: x['label']),
             multi=True,
             placeholder='Select state(s)',
         ),
@@ -131,41 +155,25 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
         html.Label('Location Type:'),
         dcc.Dropdown(
             id='site-dropdown',
-            options=[{'label': level, 'value': level} for level in df['Site.category'].unique()],
+            options=sorted([{'label': level, 'value': level} for level in df['Site.category'].unique()], key = lambda x: x['label']),
             multi=True,
             placeholder='Select location type(s)',
         ),
-        # Dropdown for selecting victim gender: Victim.gender
-        html.Label('Victim Gender:'),
+        # Dropdown for month: Incident.month
+        html.Label('Incident Month:'),
         dcc.Dropdown(
-            id='gender-dropdown',
-            options=[{'label': level, 'value': level} for level in df['Victim.gender'].unique()],
+            id='incident-month-dropdown',
+            options=sorted([{'label': level, 'value': level} for level in df['Incident.month'].unique()], key = lambda x: x['label']),
             multi=True,
-            placeholder='Select gender(s)',
+            placeholder='Select incident month(s)',
         ),
         # Dropdown for selecting data source: Data.source
         html.Label('Data Source:'),
         dcc.Dropdown(
             id='source-dropdown',
-            options=[{'label': level, 'value': level} for level in df['Data.source'].unique()],
+            options=sorted([{'label': level, 'value': level} for level in df['Data.source'].unique()], key = lambda x: x['label']),
             multi=True,
             placeholder='Select source(s)',
-        ),
-        # Dropdown for selecting victim activity: Victim.activity
-        html.Label('Victim Activity:'),
-        dcc.Dropdown(
-            id='victim-activity-dropdown',
-            options=[{'label': level, 'value': level} for level in df['Victim.activity'].unique()],
-            multi=True,
-            placeholder='Select activity(s)',
-        ),
-        # Dropdown for provoked status: Provoked/unprovoked
-        html.Label('Provoked Status:'),
-        dcc.Dropdown(
-            id='provoked-status',
-            options=[{'label': level, 'value': level} for level in df['Provoked/unprovoked'].unique()],
-            multi=True,
-            placeholder='Select provoked status',
         ),
         html.Br(), # Add a line break
         # Range slider for shark length: Shark.length.m
@@ -178,6 +186,7 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
             marks ={0.3: '0.3', 1.4: '1.4', 2.6: '2.6', 3.7: '3.7', 4.9: '4.9', 6: '6.0'}, # based on np.linspace(shark_length_min, shark_length_max, num=6) but now 6.0 shows up
             value=[shark_length_min, shark_length_max],
             tooltip={'placement': 'bottom', 'always_visible': False},
+            allowCross=False,
         ),
         html.Br(), # Add a line break
         # Checkbox for including unknown lengths
@@ -335,6 +344,7 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
         Input('state-dropdown', 'value'),
         Input('shark-length-slider', 'value'),
         Input('provoked-status', 'value'),
+        Input('incident-month-dropdown', 'value'),
         Input('include-unknown-length', 'value'),
         Input('map-tabs', 'value'),
         Input('year-slider', 'value'),
@@ -347,7 +357,7 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
         Input('color-dropdown-discrete', 'value'),
     ]
 )
-def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_severities, selected_activities, selected_sources, selected_genders, selected_sites, selected_states, shark_length_range, provoked_status, include_unknown_length, selected_tab, year_range, selected_var, selected_var2, n_clicks_bar1, n_clicks_bar2, selected_data, color_palette, color_sequence):
+def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_severities, selected_activities, selected_sources, selected_genders, selected_sites, selected_states, shark_length_range, provoked_status, incident_month, include_unknown_length, selected_tab, year_range, selected_var, selected_var2, n_clicks_bar1, n_clicks_bar2, selected_data, color_palette, color_sequence):
     """
         Update the map and charts based on the selected filters and parameters.
         Args:
@@ -361,6 +371,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         - selected_states (list): List of selected states.
         - shark_length_range (tuple): Range of selected shark lengths.
         - provoked_status (list): List of selected provoked statuses.
+        - incident_month (list): List of selected incident months.
         - include_unknown_length (str): Option to include unknown shark lengths.
         - selected_tab (str): Selected tab for map visualization ('heatmap' or 'scatter').
         - year_range (tuple): Range of selected years.
@@ -420,6 +431,9 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
     # Filter the data based on the selected provoked status(es)
     if provoked_status:
         filtered_df = filtered_df[filtered_df['Provoked/unprovoked'].isin(provoked_status)]
+    # Filter the data based on the selected incident month(s)
+    if incident_month:
+        filtered_df = filtered_df[filtered_df['Incident.month'].isin(incident_month)]
     # Filter the data based on the selected year range
     filtered_df = filtered_df[
         (filtered_df['Incident.year'] >= year_range[0]) &
