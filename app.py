@@ -470,15 +470,15 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             lat='Latitude',
             lon='Longitude',
             color=selected_var,  # Color by incident type
-            size='Size', # comment out to fix
+            size='Size', # Size based on selection
             center=dict(lat=-28, lon=130),
             zoom=2.5,
             map_style='open-street-map',
             hover_name='Shark.full.name',  # Display shark name on hover
             hover_data={selected_var: True, selected_var2: True, 'Size': False, 'IsSelected': True, 'Latitude': True, 'Longitude': True},
             labels={selected_var: categories[selected_var], selected_var2: categories[selected_var2], 'IsSelected': 'Selected'},
-            color_discrete_sequence = colorsequences[color_sequence], # changes colourmap
-            color_continuous_scale=color_palette, # Changes colourmap
+            color_discrete_sequence = colorsequences[color_sequence], # Changes discrete colourmap
+            color_continuous_scale=color_palette, # Changes continuous colourmap
             size_max=8, # Maximum marker size
             opacity=1,
         )
