@@ -478,6 +478,7 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             hover_data={selected_var: True, selected_var2: True, 'Size': False, 'IsSelected': True, 'Latitude': True, 'Longitude': True},
             labels={selected_var: categories[selected_var], selected_var2: categories[selected_var2], 'IsSelected': 'Selected'},
             color_discrete_sequence = colorsequences[color_sequence], # changes colourmap
+            color_continuous_scale=color_palette, # Changes colourmap
             size_max=8, # Maximum marker size
             opacity=1,
         )
