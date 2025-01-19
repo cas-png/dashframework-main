@@ -571,7 +571,6 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
         filtered_df,
         x='Incident.date',
         nbins=100,
-        height=200,
         title='Timeline of Incidents',
         labels={'Incident.date': '', 'count': 'Frequency'},
     )
