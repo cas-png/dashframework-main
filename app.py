@@ -133,7 +133,7 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
             id='site-dropdown',
             options=[{'label': level, 'value': level} for level in df['Site.category'].unique()],
             multi=True,
-            placeholder='Select state(s)',
+            placeholder='Select location type(s)',
         ),
         # Dropdown for selecting victim gender: Victim.gender
         html.Label('Victim Gender:'),
