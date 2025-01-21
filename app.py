@@ -530,6 +530,18 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             x=0.5,  # Centered horizontally
             font=dict(size=10),  # Smaller font size
             bgcolor='rgba(255, 255, 255, 0.3)',  # Semi-transparent background for better readability
+        ),
+        xaxis=dict(
+            title=dict(
+                font=dict(size=12)
+            ),
+            tickfont=dict(size=8)
+        ),
+        yaxis=dict(
+            title=dict(
+                font=dict(size=12)
+            ),
+            tickfont=dict(size=8)
         )
     )
 
@@ -565,20 +577,70 @@ def update_map_and_chart(selected_sharks, selected_injuries, selected_injury_sev
             x=0.5,  # Centered horizontally
             font=dict(size=10),  # Smaller font size
             bgcolor='rgba(255, 255, 255, 0.3)',  # Semi-transparent background for better readability
+        ),
+        xaxis = dict(
+            title=dict(
+                font=dict(size=12)
+            ),
+            tickfont=dict(size=8)
+        ),
+        yaxis = dict(
+            title=dict(
+                font=dict(size=12)
+            ),
+            tickfont=dict(size=8)
         )
     )
 
     # Create correlation heatmap
-    filtered_df['Modified_var'] = filtered_df[selected_var].astype(str).str.replace('shark', '', regex=False)
-    filtered_df['Modified_var2'] = filtered_df[selected_var2].astype(str).str.replace('shark', '', regex=False)
-    heat_fig = go.Figure(go.Histogram2d(
-        x=filtered_df['Modified_var'],
-        y=filtered_df['Modified_var2'],
-        # legend={selected_var: categories[selected_var2], selected_var2: categories[selected_var2]},
-        colorscale=color_palette,  # changes colourmap
-        texttemplate='%{z}',
-    ))
-    heat_fig.update_layout(margin=dict(l=5, r=5, t=40, b=5))
+    if selected_df.empty:
+        filtered_df['Modified_var'] = filtered_df[selected_var].astype(str).str.replace('shark', '', regex=False)
+        filtered_df['Modified_var2'] = filtered_df[selected_var2].astype(str).str.replace('shark', '', regex=False)
+        heat_fig = go.Figure(go.Histogram2d(
+            x=filtered_df['Modified_var'],
+            y=filtered_df['Modified_var2'],
+            colorscale=color_palette,  # Changes colourmap
+            texttemplate='%{z}',
+        ))
+        heat_fig.update_layout(
+            margin=dict(l=5, r=5, t=40, b=5),
+            xaxis=dict(
+                title=dict(
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=8)
+            ),
+            yaxis=dict(
+                title=dict(
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=8)
+            )
+        )
+    else:
+        selected_df['Modified_var'] = selected_df[selected_var].astype(str).str.replace('shark', '', regex=False)
+        selected_df['Modified_var2'] = selected_df[selected_var2].astype(str).str.replace('shark', '', regex=False)
+        heat_fig = go.Figure(go.Histogram2d(
+            x=selected_df['Modified_var'],
+            y=selected_df['Modified_var2'],
+            colorscale=color_palette,  # Changes colourmap
+            texttemplate='%{z}',
+        ))
+        heat_fig.update_layout(
+            margin=dict(l=5, r=5, t=40, b=5),
+            xaxis=dict(
+                title=dict(
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=8)
+            ),
+            yaxis=dict(
+                title=dict(
+                    font=dict(size=12)
+                ),
+                tickfont=dict(size=8)
+            )
+        )
 
     # create the timeline histogram
     timeline_fig = px.histogram(
