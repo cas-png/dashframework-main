@@ -239,7 +239,7 @@ app.layout = html.Div(style={'height': '98vh', 'width': '98vw', 'margin': 0, 'pa
                     html.Div('Tool created by JBI100 team 30 (2024-2025 Q2).'),
                     dbc.Button('Visualisation Tool GitHub', href='https://github.com/cas-png/dashframework-main'),
                     dbc.Button('Data Source GitHub', href='https://github.com/cjabradshaw/AustralianSharkIncidentDatabase'),
-                    dbc.Button('Video Presentation', href='/'), # TODO: Add link to video presentation
+                    dbc.Button('Video Presentation', href='https://www.youtube.com/watch?v=0-_GT9-4Vnc'),
             ]),
                 dbc.ModalFooter(dbc.Button('Close', id='close-dismiss'), className='justify-content-center') # Footer of the modal: close button
             ],
